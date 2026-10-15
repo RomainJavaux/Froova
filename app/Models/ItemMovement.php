@@ -3,10 +3,10 @@
 namespace App\Models;
 
 use App\Enums\MovementType;
+use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Support\Carbon;
 
 /**
  * @property int $id
@@ -20,7 +20,7 @@ use Illuminate\Support\Carbon;
  * @property int|null $from_compartment_id
  * @property int|null $to_compartment_id
  * @property string|null $note
- * @property Carbon $created_at
+ * @property CarbonImmutable $created_at
  */
 #[Fillable([
     'household_id', 'item_id', 'user_id', 'type', 'item_name', 'item_emoji', 'quantity',

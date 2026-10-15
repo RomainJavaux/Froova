@@ -1,0 +1,108 @@
+<!doctype html>
+<html lang="fr">
+    <head>
+        <meta charset="utf-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+        <meta name="theme-color" content="#6366f1" />
+        <title>Hors ligne · Froova</title>
+        <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+        <style>
+            :root {
+                color-scheme: light dark;
+                --bg: #f6f9fd;
+                --fg: #1e2547;
+                --muted: #6b7394;
+                --card: rgb(255 255 255 / 0.8);
+            }
+
+            @media (prefers-color-scheme: dark) {
+                :root {
+                    --bg: #111628;
+                    --fg: #eef1fb;
+                    --muted: #9aa3c4;
+                    --card: rgb(30 36 66 / 0.7);
+                }
+            }
+
+            * {
+                box-sizing: border-box;
+            }
+
+            body {
+                margin: 0;
+                min-height: 100dvh;
+                display: grid;
+                place-items: center;
+                padding: 24px;
+                font-family: ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
+                color: var(--fg);
+                background:
+                    radial-gradient(circle at 15% 10%, rgb(125 211 252 / 0.35), transparent 45%),
+                    radial-gradient(circle at 85% 90%, rgb(167 139 250 / 0.3), transparent 45%),
+                    var(--bg);
+            }
+
+            main {
+                max-width: 380px;
+                width: 100%;
+                text-align: center;
+                padding: 40px 28px;
+                border-radius: 32px;
+                background: var(--card);
+                border: 1px solid rgb(255 255 255 / 0.15);
+                backdrop-filter: blur(20px);
+                box-shadow: 0 30px 60px -30px rgb(30 41 99 / 0.45);
+            }
+
+            .flake {
+                font-size: 64px;
+                display: inline-block;
+                animation: float 4s ease-in-out infinite;
+            }
+
+            h1 {
+                margin: 16px 0 8px;
+                font-size: 26px;
+                letter-spacing: -0.02em;
+            }
+
+            p {
+                margin: 0;
+                color: var(--muted);
+                line-height: 1.5;
+            }
+
+            button {
+                margin-top: 28px;
+                width: 100%;
+                height: 52px;
+                border: 0;
+                border-radius: 18px;
+                font: inherit;
+                font-weight: 700;
+                font-size: 16px;
+                color: white;
+                background: linear-gradient(135deg, #38bdf8, #6366f1);
+                box-shadow: 0 14px 30px -12px rgb(99 102 241 / 0.8);
+                cursor: pointer;
+            }
+
+            @keyframes float {
+                50% {
+                    transform: translateY(-10px) rotate(12deg);
+                }
+            }
+        </style>
+    </head>
+    <body>
+        <main>
+            <span class="flake">❄️</span>
+            <h1>Pas de réseau</h1>
+            <p>Ton congélo est toujours là, promis. Reconnecte-toi pour voir ce qu’il contient et mettre à jour tes batchs.</p>
+            <button type="button" onclick="location.reload()">Réessayer</button>
+        </main>
+        <script>
+            window.addEventListener('online', () => location.reload());
+        </script>
+    </body>
+</html>

@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Enums\ItemCategory;
 use App\Enums\ItemUnit;
+use Carbon\CarbonImmutable;
 use Database\Factories\ItemFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Builder;
@@ -11,7 +12,6 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Storage;
 
 /**
@@ -29,13 +29,13 @@ use Illuminate\Support\Facades\Storage;
  * @property ItemUnit $unit
  * @property int|null $servings
  * @property int|null $weight_grams
- * @property Carbon|null $prepared_on
- * @property Carbon $frozen_on
- * @property Carbon|null $best_before
+ * @property CarbonImmutable|null $prepared_on
+ * @property CarbonImmutable $frozen_on
+ * @property CarbonImmutable|null $best_before
  * @property list<string>|null $tags
- * @property Carbon|null $finished_at
- * @property Carbon|null $created_at
- * @property Carbon|null $updated_at
+ * @property CarbonImmutable|null $finished_at
+ * @property CarbonImmutable|null $created_at
+ * @property CarbonImmutable|null $updated_at
  */
 #[Fillable([
     'household_id', 'compartment_id', 'created_by', 'name', 'emoji', 'category', 'description',

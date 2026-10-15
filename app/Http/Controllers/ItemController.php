@@ -197,7 +197,7 @@ class ItemController extends Controller
      */
     private function freezerOptions(Household $household): array
     {
-        return $household->freezers()
+        return array_values($household->freezers()
             ->with(['compartments' => fn ($query) => $query->withCount(['items' => fn ($items) => $items->inStock()])])
             ->get()
             ->map(fn (Freezer $freezer) => [
@@ -213,8 +213,7 @@ class ItemController extends Controller
                     'itemsCount' => (int) $compartment->getAttribute('items_count'),
                 ])->values()->all(),
             ])
-            ->values()
-            ->all();
+            ->all());
     }
 
     /**
@@ -224,7 +223,7 @@ class ItemController extends Controller
      */
     private function suggestions(Household $household): array
     {
-        return $household->items()
+        return array_values($household->items()
             ->latest('id')
             ->limit(200)
             ->get(['id', 'name', 'emoji', 'category', 'unit', 'servings'])
@@ -238,8 +237,7 @@ class ItemController extends Controller
                 'unit' => $item->unit->value,
                 'servings' => $item->servings,
             ])
-            ->values()
-            ->all();
+            ->all());
     }
 
     /**
@@ -258,12 +256,11 @@ class ItemController extends Controller
      */
     private function cleanTags(array $tags): array
     {
-        return collect($tags)
+        return array_values(collect($tags)
             ->map(fn (string $tag) => Str::of($tag)->trim()->lower()->toString())
             ->filter()
             ->unique()
-            ->values()
-            ->all();
+            ->all());
     }
 
     private function copyPhotoFrom(Household $household, int $itemId): ?string

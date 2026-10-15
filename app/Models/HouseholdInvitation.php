@@ -3,11 +3,11 @@
 namespace App\Models;
 
 use App\Enums\HouseholdRole;
+use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Support\Carbon;
 
 /**
  * @property int $id
@@ -16,11 +16,11 @@ use Illuminate\Support\Carbon;
  * @property string|null $email
  * @property string $token
  * @property HouseholdRole $role
- * @property Carbon $expires_at
- * @property Carbon|null $accepted_at
+ * @property CarbonImmutable $expires_at
+ * @property CarbonImmutable|null $accepted_at
  * @property int|null $accepted_by
- * @property Carbon|null $created_at
- * @property Carbon|null $updated_at
+ * @property CarbonImmutable|null $created_at
+ * @property CarbonImmutable|null $updated_at
  */
 #[Fillable(['household_id', 'invited_by', 'email', 'token', 'role', 'expires_at', 'accepted_at', 'accepted_by'])]
 class HouseholdInvitation extends Model

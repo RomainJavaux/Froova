@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Enums\FreezerType;
+use Carbon\CarbonImmutable;
 use Database\Factories\FreezerFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -10,7 +11,6 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasManyThrough;
-use Illuminate\Support\Carbon;
 
 /**
  * @property int $id
@@ -20,10 +20,10 @@ use Illuminate\Support\Carbon;
  * @property string $color
  * @property string|null $location
  * @property string|null $notes
- * @property Carbon|null $last_defrosted_on
+ * @property CarbonImmutable|null $last_defrosted_on
  * @property int $position
- * @property Carbon|null $created_at
- * @property Carbon|null $updated_at
+ * @property CarbonImmutable|null $created_at
+ * @property CarbonImmutable|null $updated_at
  */
 #[Fillable(['household_id', 'name', 'type', 'color', 'location', 'notes', 'last_defrosted_on', 'position'])]
 class Freezer extends Model

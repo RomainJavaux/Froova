@@ -19,6 +19,9 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->encryptCookies(except: ['appearance', 'sidebar_state']);
 
+        // Hostinger serves the app behind its CDN / load balancer.
+        $middleware->trustProxies(at: '*');
+
         $middleware->web(append: [
             RememberPasskeyLogins::class,
             HandleAppearance::class,
