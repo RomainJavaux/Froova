@@ -216,11 +216,14 @@
     html {
         -webkit-tap-highlight-color: transparent;
         text-size-adjust: 100%;
+        overflow-x: clip;
     }
 
     body {
         @apply bg-background text-foreground;
         overscroll-behavior-y: none;
+        /* Decorative glows must never make phones zoom out; `clip` keeps sticky elements working. */
+        overflow-x: clip;
         font-feature-settings: 'ss01', 'cv11';
     }
 

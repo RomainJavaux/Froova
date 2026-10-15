@@ -49,7 +49,7 @@ export function InstallBanner() {
                     className="overflow-hidden"
                 >
                     <div className="relative mb-6 flex items-center gap-4 overflow-hidden rounded-3xl bg-[linear-gradient(120deg,#0ea5e9,#6366f1_55%,#8b5cf6)] p-4 text-white shadow-[var(--shadow-float)] sm:p-5">
-                        <div className="absolute -top-10 -right-6 size-40 rounded-full bg-white/15 blur-2xl" />
+                        <div className="absolute -top-10 -right-6 size-40 rounded-full bg-[radial-gradient(circle,rgb(255_255_255/0.25),transparent_70%)]" />
                         <motion.div
                             className="grid size-14 shrink-0 place-items-center rounded-2xl bg-white/20 backdrop-blur"
                             animate={{ rotate: [0, -8, 8, 0] }}

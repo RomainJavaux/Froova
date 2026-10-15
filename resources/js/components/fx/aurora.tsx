@@ -44,11 +44,12 @@ export function Aurora({ className }: { className?: string }) {
                 <motion.div
                     key={index}
                     className={cn(
-                        'absolute rounded-full blur-3xl',
+                        'absolute rounded-full will-change-transform',
                         blob.className,
                     )}
                     style={{
-                        background: `radial-gradient(circle at center, ${blob.color}, transparent 65%)`,
+                        // A soft radial falloff instead of a CSS blur keeps scrolling smooth on phones.
+                        background: `radial-gradient(circle at center, ${blob.color}, transparent 68%)`,
                     }}
                     animate={{ x: blob.x, y: blob.y }}
                     transition={{
@@ -73,19 +74,21 @@ export function Snowfall({
     count?: number;
     className?: string;
 }) {
-    const flakes = Array.from({ length: count }, (_, index) => {
-        const seed = (index * 9301 + 49297) % 233280;
-        const random = seed / 233280;
+    // Deterministic pseudo-random values so server and client renders match.
+    const noise = (index: number, salt: number) => {
+        const value = Math.sin(index * 12.9898 + salt * 78.233) * 43758.5453;
 
-        return {
-            left: `${(index / count) * 100 + random * 5}%`,
-            size: 6 + Math.round(random * 10),
-            duration: 9 + random * 10,
-            delay: -random * 14,
-            drift: `${Math.round(random * 60 - 30)}px`,
-            opacity: 0.35 + random * 0.5,
-        };
-    });
+        return value - Math.floor(value);
+    };
+
+    const flakes = Array.from({ length: count }, (_, index) => ({
+        left: `${(index / count) * 100 + noise(index, 1) * (100 / count)}%`,
+        size: 7 + Math.round(noise(index, 2) * 9),
+        duration: 10 + noise(index, 3) * 10,
+        delay: -noise(index, 4) * 20,
+        drift: `${Math.round(noise(index, 5) * 60 - 30)}px`,
+        opacity: 0.3 + noise(index, 6) * 0.5,
+    }));
 
     return (
         <div
@@ -110,7 +113,7 @@ export function Snowfall({
                         } as React.CSSProperties
                     }
                 >
-                    ❄
+                    {'❄︎'}
                 </span>
             ))}
         </div>

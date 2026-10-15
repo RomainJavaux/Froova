@@ -21,7 +21,7 @@ export default function AuthLayout({
             {/* Brand panel */}
             <div className="relative hidden overflow-hidden bg-[linear-gradient(150deg,#0ea5e9,#6366f1_55%,#8b5cf6)] p-10 text-white lg:flex lg:flex-col">
                 <Snowfall count={22} />
-                <div className="absolute -bottom-32 -left-20 size-[28rem] rounded-full bg-white/10 blur-3xl" />
+                <div className="absolute -bottom-32 -left-20 size-[28rem] rounded-full bg-[radial-gradient(circle,rgb(255_255_255/0.18),transparent_70%)]" />
                 <Link href={home()} className="relative">
                     <AppLogo className="[&_span]:text-white" />
                 </Link>

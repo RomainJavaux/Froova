@@ -46,6 +46,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { findCategory, unitWord, useCatalog } from '@/lib/catalog';
 import { formatDate, freshnessLabel } from '@/lib/dates';
+import { cn } from '@/lib/utils';
 import freezersRoutes from '@/routes/freezers';
 import itemsRoutes from '@/routes/items';
 import type { FreezerOption, Item, Movement } from '@/types';
@@ -147,7 +148,7 @@ export default function ItemShow({
                 }
             />
 
-            <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_380px] lg:gap-10">
+            <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1fr)_380px] lg:gap-10">
                 <div className="space-y-6">
                     {/* Hero */}
                     <motion.div
@@ -161,10 +162,9 @@ export default function ItemShow({
                             className="aspect-[16/10] h-auto w-full rounded-none text-[110px] sm:aspect-[16/8]"
                         />
                         <div className="absolute inset-x-0 bottom-0 flex items-end justify-between gap-3 bg-gradient-to-t from-black/55 to-transparent p-5 pt-16 text-white">
-                            <FreshnessBadge
-                                freshness={item.freshness}
-                                className="bg-white/90 !text-slate-900"
-                            />
+                            <span className="rounded-full bg-white/90 shadow-sm backdrop-blur dark:bg-slate-900/85">
+                                <FreshnessBadge freshness={item.freshness} />
+                            </span>
                             {item.tags.length > 0 && (
                                 <div className="flex flex-wrap justify-end gap-1">
                                     {item.tags.map((tag) => (
@@ -179,6 +179,10 @@ export default function ItemShow({
                             )}
                         </div>
                     </motion.div>
+
+                    {!finished && (
+                        <StockActions className="lg:hidden" onOpen={setSheet} />
+                    )}
 
                     {finished && (
                         <motion.div
@@ -209,7 +213,7 @@ export default function ItemShow({
                     )}
 
                     {/* Quantity + freshness */}
-                    <div className="grid gap-4 sm:grid-cols-2">
+                    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                         <div className="surface p-5">
                             <p className="text-sm font-semibold text-muted-foreground">
                                 Il reste
@@ -336,30 +340,10 @@ export default function ItemShow({
                 {/* Side */}
                 <aside className="space-y-5 lg:sticky lg:top-10 lg:self-start">
                     {!finished && (
-                        <div className="surface space-y-2.5 p-4">
-                            <Button
-                                size="lg"
-                                className="w-full"
-                                onClick={() => setSheet('take')}
-                            >
-                                <HandPlatter className="size-5" /> Je prends
-                            </Button>
-                            <div className="grid grid-cols-2 gap-2.5">
-                                <Button
-                                    variant="secondary"
-                                    onClick={() => setSheet('restock')}
-                                >
-                                    <PlusCircle className="size-4" /> Rajouter
-                                </Button>
-                                <Button
-                                    variant="secondary"
-                                    onClick={() => setSheet('move')}
-                                >
-                                    <ArrowRightLeft className="size-4" />{' '}
-                                    Déplacer
-                                </Button>
-                            </div>
-                        </div>
+                        <StockActions
+                            className="hidden lg:block"
+                            onOpen={setSheet}
+                        />
                     )}
 
                     {finished && (
@@ -499,6 +483,30 @@ export default function ItemShow({
                 <div />
             </BottomSheet>
         </>
+    );
+}
+
+function StockActions({
+    className,
+    onOpen,
+}: {
+    className?: string;
+    onOpen: (sheet: Sheet) => void;
+}) {
+    return (
+        <div className={cn('surface space-y-2.5 p-4', className)}>
+            <Button size="lg" className="w-full" onClick={() => onOpen('take')}>
+                <HandPlatter className="size-5" /> Je prends
+            </Button>
+            <div className="grid grid-cols-2 gap-2.5">
+                <Button variant="secondary" onClick={() => onOpen('restock')}>
+                    <PlusCircle className="size-4" /> Rajouter
+                </Button>
+                <Button variant="secondary" onClick={() => onOpen('move')}>
+                    <ArrowRightLeft className="size-4" /> Déplacer
+                </Button>
+            </div>
+        </div>
     );
 }
 

@@ -138,7 +138,7 @@ export default function Welcome() {
                     </motion.div>
 
                     <div className="relative mx-auto w-full max-w-md">
-                        <div className="absolute inset-10 -z-10 rounded-full bg-[radial-gradient(circle,rgb(99_102_241/0.4),transparent_65%)] blur-3xl" />
+                        <div className="absolute inset-10 -z-10 rounded-full bg-[radial-gradient(circle,rgb(99_102_241/0.4),transparent_70%)]" />
                         <motion.div
                             initial={{ opacity: 0, y: 40 }}
                             animate={{ opacity: 1, y: 0 }}
@@ -254,7 +254,7 @@ export default function Welcome() {
                 {/* Steps */}
                 <section className="pb-24">
                     <div className="relative overflow-hidden rounded-[40px] bg-[linear-gradient(135deg,#0ea5e9,#6366f1_55%,#8b5cf6)] p-8 text-white shadow-[var(--shadow-float)] sm:p-12">
-                        <div className="absolute -top-20 -right-20 size-72 rounded-full bg-white/15 blur-3xl" />
+                        <div className="absolute -top-20 -right-20 size-72 rounded-full bg-[radial-gradient(circle,rgb(255_255_255/0.25),transparent_70%)]" />
                         <h2 className="relative font-display text-3xl font-extrabold sm:text-4xl">
                             Prêt en 2 minutes
                         </h2>

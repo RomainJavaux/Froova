@@ -64,46 +64,50 @@ export const ItemRow = forwardRef<HTMLDivElement, ItemRowProps>(
                 )}
 
                 <div className="surface relative flex items-center gap-3.5 rounded-[22px] p-3 transition-shadow hover:shadow-[var(--shadow-float)]">
-                    <Link
-                        href={items.show(item.id)}
-                        prefetch
-                        className="flex min-w-0 flex-1 items-center gap-3.5"
-                    >
-                        <ItemAvatar item={item} />
+                    <ItemAvatar item={item} />
 
-                        <div className="min-w-0 flex-1">
-                            <div className="flex items-center gap-2">
-                                <h3 className="truncate text-[15px] font-bold">
-                                    {item.name}
-                                </h3>
-                            </div>
+                    <div className="min-w-0 flex-1">
+                        <h3 className="truncate text-[15px] font-bold">
+                            {/* Stretched link: the whole card opens the item, without nesting the location link inside it. */}
+                            <Link
+                                href={items.show(item.id)}
+                                prefetch
+                                className="outline-none after:absolute after:inset-0 after:rounded-[22px] focus-visible:after:ring-4 focus-visible:after:ring-ring/30"
+                            >
+                                {item.name}
+                            </Link>
+                        </h3>
 
-                            <div className="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-[13px] text-muted-foreground">
-                                <span className="font-semibold text-foreground/80">
-                                    {formatQuantity(
-                                        catalog,
-                                        item.unit,
-                                        item.quantity,
-                                    )}
-                                </span>
-                                {item.servings && (
-                                    <span>· {item.servings} pers.</span>
+                        <div className="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-[13px] text-muted-foreground">
+                            <span className="font-semibold text-foreground/80">
+                                {formatQuantity(
+                                    catalog,
+                                    item.unit,
+                                    item.quantity,
                                 )}
-                            </div>
-
-                            <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
-                                <FreshnessBadge freshness={item.freshness} />
-                                {showLocation && <LocationPill item={item} />}
-                            </div>
+                            </span>
+                            {item.servings && (
+                                <span>· {item.servings} pers.</span>
+                            )}
                         </div>
-                    </Link>
+
+                        <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
+                            <FreshnessBadge freshness={item.freshness} />
+                            {showLocation && (
+                                <LocationPill
+                                    item={item}
+                                    className="relative z-10"
+                                />
+                            )}
+                        </div>
+                    </div>
 
                     {onTake && (
                         <motion.button
                             type="button"
                             whileTap={{ scale: 0.9 }}
                             onClick={() => onTake(item)}
-                            className="grid size-12 shrink-0 place-items-center rounded-2xl bg-primary/10 text-primary transition hover:bg-primary hover:text-primary-foreground"
+                            className="relative z-10 grid size-12 shrink-0 place-items-center rounded-2xl bg-primary/10 text-primary transition hover:bg-primary hover:text-primary-foreground"
                             aria-label={`Prendre ${item.name}`}
                             title="Je prends"
                         >

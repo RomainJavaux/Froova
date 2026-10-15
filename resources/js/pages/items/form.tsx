@@ -244,7 +244,7 @@ export default function ItemForm({
 
             <form
                 onSubmit={submit}
-                className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_400px] lg:gap-12"
+                className="grid grid-cols-1 gap-8 lg:grid-cols-[minmax(0,1fr)_400px] lg:gap-12"
             >
                 <div className="space-y-9">
                     {/* Photo + name */}
@@ -605,7 +605,7 @@ export default function ItemForm({
                     <section>
                         <StepLabel step={4} title="Les dates" />
                         <div className="surface space-y-4 p-5">
-                            <div className="grid gap-3 sm:grid-cols-2">
+                            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                                 <label className="space-y-1.5">
                                     <span className="text-sm font-semibold">
                                         Préparé le
@@ -738,7 +738,7 @@ export default function ItemForm({
                                 placeholder="Recette, astuces de réchauffage, allergènes…"
                                 rows={3}
                             />
-                            <div className="grid gap-3 sm:grid-cols-2">
+                            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                                 <label className="space-y-1.5">
                                     <span className="text-sm font-semibold">
                                         Poids total (g)

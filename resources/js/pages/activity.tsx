@@ -48,7 +48,7 @@ export default function Activity({ movements }: { movements: Movement[] }) {
                     description="Dès que quelqu’un range ou prend un batch, ça s’affiche ici."
                 />
             ) : (
-                <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_300px]">
+                <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1fr)_300px]">
                     <div className="space-y-6">
                         {groups.map(([day, entries], groupIndex) => (
                             <motion.section

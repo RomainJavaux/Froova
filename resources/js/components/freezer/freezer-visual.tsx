@@ -380,11 +380,20 @@ function Drawer({
     const tiny = size === 'xs';
 
     return (
-        <motion.button
-            type="button"
+        <motion.div
+            // A div with a button role: these drawers are often drawn inside links and cards.
+            role={interactive ? 'button' : undefined}
+            tabIndex={interactive ? 0 : undefined}
+            aria-pressed={interactive ? selected : undefined}
+            aria-label={interactive ? compartment.name : undefined}
             layout
-            disabled={!interactive}
             onClick={() => onSelect?.(compartment.id)}
+            onKeyDown={(event) => {
+                if (interactive && (event.key === 'Enter' || event.key === ' ')) {
+                    event.preventDefault();
+                    onSelect?.(compartment.id);
+                }
+            }}
             initial={{ opacity: 0, x: -14, scaleY: 0.6 }}
             animate={{
                 opacity: dimmed ? 0.55 : 1,
@@ -525,7 +534,7 @@ function Drawer({
                     {count}
                 </span>
             )}
-        </motion.button>
+        </motion.div>
     );
 }
 
@@ -589,14 +598,22 @@ function ChestFreezer({
                                 const itemsCount = compartment.itemsCount ?? 0;
 
                                 return (
-                                    <motion.button
+                                    <motion.div
                                         key={compartment.id}
-                                        type="button"
+                                        role={onSelect ? 'button' : undefined}
+                                        tabIndex={onSelect ? 0 : undefined}
+                                        aria-pressed={onSelect ? selected : undefined}
+                                        aria-label={onSelect ? compartment.name : undefined}
                                         layout
-                                        disabled={!onSelect}
                                         onClick={() =>
                                             onSelect?.(compartment.id)
                                         }
+                                        onKeyDown={(event) => {
+                                            if (onSelect && (event.key === 'Enter' || event.key === ' ')) {
+                                                event.preventDefault();
+                                                onSelect(compartment.id);
+                                            }
+                                        }}
                                         initial={{ opacity: 0, scale: 0.7 }}
                                         animate={{
                                             opacity:
@@ -720,7 +737,7 @@ function ChestFreezer({
                                                 )}
                                             </>
                                         )}
-                                    </motion.button>
+                                    </motion.div>
                                 );
                             })}
                         </AnimatePresence>

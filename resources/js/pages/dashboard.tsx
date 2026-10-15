@@ -121,14 +121,14 @@ export default function Dashboard({
                     <InstallBanner />
                 </motion.div>
 
-                <div className="grid gap-5 lg:grid-cols-3">
+                <div className="grid grid-cols-1 gap-5 lg:grid-cols-3">
                     {/* Hero */}
                     <motion.section
                         variants={rise}
                         className="relative overflow-hidden rounded-[32px] p-6 text-white shadow-[var(--shadow-float)] sm:p-8 lg:col-span-2"
                         style={{ background: `${gradient(palette, 135)}` }}
                     >
-                        <div className="absolute inset-0 bg-[radial-gradient(circle_at_85%_15%,rgb(255_255_255/0.35),transparent_45%)]" />
+                        <div className="absolute inset-0 bg-[radial-gradient(circle_at_85%_15%,rgb(255_255_255/0.3),transparent_45%),linear-gradient(160deg,rgb(15_23_42/0.12),rgb(15_23_42/0.3))]" />
                         <Snowfall count={14} className="opacity-70" />
 
                         <div className="relative">
@@ -287,7 +287,7 @@ export default function Dashboard({
                     </div>
                 </motion.section>
 
-                <div className="grid gap-5 lg:grid-cols-2">
+                <div className="grid grid-cols-1 gap-5 lg:grid-cols-2">
                     {/* Categories */}
                     <motion.section
                         variants={rise}
