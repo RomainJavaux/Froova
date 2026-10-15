@@ -11,7 +11,12 @@ const STATIC_CACHE = `${VERSION}-static`;
 const IMAGE_CACHE = `${VERSION}-images`;
 const PAGE_CACHE = `${VERSION}-pages`;
 const OFFLINE_URL = '/offline.html';
-const PRECACHE = [OFFLINE_URL, '/favicon.svg', '/icons/icon-192.png', '/manifest.webmanifest'];
+const PRECACHE = [
+    OFFLINE_URL,
+    '/favicon.svg',
+    '/icons/icon-192.png',
+    '/manifest.webmanifest',
+];
 const MAX_IMAGES = 150;
 const MAX_PAGES = 40;
 
@@ -28,7 +33,11 @@ self.addEventListener('activate', (event) => {
     event.waitUntil(
         (async () => {
             const keys = await caches.keys();
-            await Promise.all(keys.filter((key) => !key.startsWith(VERSION)).map((key) => caches.delete(key)));
+            await Promise.all(
+                keys
+                    .filter((key) => !key.startsWith(VERSION))
+                    .map((key) => caches.delete(key)),
+            );
 
             if (self.registration.navigationPreload) {
                 await self.registration.navigationPreload.enable();
@@ -54,7 +63,11 @@ self.addEventListener('fetch', (event) => {
         return;
     }
 
-    if (request.headers.has('X-Inertia') || url.pathname.startsWith('/_inertia') || url.pathname === '/sw.js') {
+    if (
+        request.headers.has('X-Inertia') ||
+        url.pathname.startsWith('/_inertia') ||
+        url.pathname === '/sw.js'
+    ) {
         return;
     }
 
@@ -64,8 +77,13 @@ self.addEventListener('fetch', (event) => {
         return;
     }
 
-    if (url.pathname.startsWith('/storage/') || url.pathname.startsWith('/icons/')) {
-        event.respondWith(staleWhileRevalidate(request, IMAGE_CACHE, MAX_IMAGES));
+    if (
+        url.pathname.startsWith('/storage/') ||
+        url.pathname.startsWith('/icons/')
+    ) {
+        event.respondWith(
+            staleWhileRevalidate(request, IMAGE_CACHE, MAX_IMAGES),
+        );
 
         return;
     }
@@ -114,7 +132,8 @@ async function networkFirstPage(event) {
     const { request } = event;
 
     try {
-        const response = (await event.preloadResponse) ?? (await fetch(request));
+        const response =
+            (await event.preloadResponse) ?? (await fetch(request));
 
         // Only keep real pages (not redirects to the login screen) for offline use.
         if (response.ok && !response.redirected) {
@@ -135,5 +154,9 @@ async function trim(cacheName, limit) {
     const cache = await caches.open(cacheName);
     const keys = await cache.keys();
 
-    await Promise.all(keys.slice(0, Math.max(0, keys.length - limit)).map((key) => cache.delete(key)));
+    await Promise.all(
+        keys
+            .slice(0, Math.max(0, keys.length - limit))
+            .map((key) => cache.delete(key)),
+    );
 }

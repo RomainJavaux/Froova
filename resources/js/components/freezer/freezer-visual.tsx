@@ -389,7 +389,10 @@ function Drawer({
             layout
             onClick={() => onSelect?.(compartment.id)}
             onKeyDown={(event) => {
-                if (interactive && (event.key === 'Enter' || event.key === ' ')) {
+                if (
+                    interactive &&
+                    (event.key === 'Enter' || event.key === ' ')
+                ) {
                     event.preventDefault();
                     onSelect?.(compartment.id);
                 }
@@ -602,14 +605,24 @@ function ChestFreezer({
                                         key={compartment.id}
                                         role={onSelect ? 'button' : undefined}
                                         tabIndex={onSelect ? 0 : undefined}
-                                        aria-pressed={onSelect ? selected : undefined}
-                                        aria-label={onSelect ? compartment.name : undefined}
+                                        aria-pressed={
+                                            onSelect ? selected : undefined
+                                        }
+                                        aria-label={
+                                            onSelect
+                                                ? compartment.name
+                                                : undefined
+                                        }
                                         layout
                                         onClick={() =>
                                             onSelect?.(compartment.id)
                                         }
                                         onKeyDown={(event) => {
-                                            if (onSelect && (event.key === 'Enter' || event.key === ' ')) {
+                                            if (
+                                                onSelect &&
+                                                (event.key === 'Enter' ||
+                                                    event.key === ' ')
+                                            ) {
                                                 event.preventDefault();
                                                 onSelect(compartment.id);
                                             }

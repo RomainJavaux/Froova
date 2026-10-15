@@ -14,7 +14,8 @@ const publicDir = resolve(root, 'public');
 
 await mkdir(resolve(publicDir, 'icons'), { recursive: true });
 
-const render = (size) => sharp(logo, { density: 1024 }).resize(size, size).png().toBuffer();
+const render = (size) =>
+    sharp(logo, { density: 1024 }).resize(size, size).png().toBuffer();
 
 /**
  * Maskable icons are cropped by the OS: draw the gradient edge to edge.
@@ -22,7 +23,8 @@ const render = (size) => sharp(logo, { density: 1024 }).resize(size, size).png()
  */
 const fullBleed = Buffer.from(logo.toString().replaceAll('rx="18"', 'rx="0"'));
 
-const maskable = (size) => sharp(fullBleed, { density: 1024 }).resize(size, size).png().toBuffer();
+const maskable = (size) =>
+    sharp(fullBleed, { density: 1024 }).resize(size, size).png().toBuffer();
 
 /**
  * A .ico file can simply wrap PNG images.
@@ -49,7 +51,11 @@ function ico(images) {
         return entry;
     });
 
-    return Buffer.concat([header, ...entries, ...images.map(({ data }) => data)]);
+    return Buffer.concat([
+        header,
+        ...entries,
+        ...images.map(({ data }) => data),
+    ]);
 }
 
 const outputs = {
