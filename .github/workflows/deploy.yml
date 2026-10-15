@@ -39,8 +39,9 @@ jobs:
       SSH_HOST: ${{ secrets.HOSTINGER_SSH_HOST }}
       SSH_USER: ${{ secrets.HOSTINGER_SSH_USER }}
       SSH_PORT: ${{ vars.HOSTINGER_SSH_PORT || '65002' }}
-      DEPLOY_PATH: ${{ vars.HOSTINGER_DEPLOY_PATH }}
-      PUBLIC_HTML: ${{ vars.HOSTINGER_PUBLIC_HTML }}
+      # Paths contain the Hostinger account name: as secrets they are masked in public logs.
+      DEPLOY_PATH: ${{ secrets.HOSTINGER_DEPLOY_PATH || vars.HOSTINGER_DEPLOY_PATH }}
+      PUBLIC_HTML: ${{ secrets.HOSTINGER_PUBLIC_HTML || vars.HOSTINGER_PUBLIC_HTML }}
       PHP_BIN: ${{ vars.HOSTINGER_PHP_BIN || 'php' }}
       APP_URL: ${{ vars.APP_URL }}
       ACTION: ${{ inputs.action || 'deploy' }}

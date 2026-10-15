@@ -1,6 +1,6 @@
 # ❄️ Froova
 
-**Ton congélo, enfin rangé.** Froova est une application web (installable sur mobile) pour gérer tes congélateurs en famille, pensée pour le batch cooking : tu dessines tes congélateurs et leurs tiroirs, tu ranges tes plats avec photo, quantité et dates, et tu retrouves en un geste où se cache la dernière part de lasagnes.
+**Ton congélo, enfin rangé.** Froova est une application web open source (installable sur mobile) pour gérer tes congélateurs en famille, pensée pour le batch cooking : tu dessines tes congélateurs et leurs tiroirs, tu ranges tes plats avec photo, quantité et dates, et tu retrouves en un geste où se cache la dernière part de lasagnes.
 
 ## Fonctionnalités
 
@@ -66,3 +66,11 @@ Push sur `main` → tests → build → mise en ligne atomique sur Hostinger via
 | `resources/js/pages/`                         | les écrans Inertia                                                          |
 | `public/sw.js`, `public/manifest.webmanifest` | la PWA                                                                      |
 | `deploy/remote.sh`, `.github/workflows/`      | le pipeline de déploiement                                                  |
+
+## Contribuer
+
+Les issues et pull requests sont les bienvenues. Avant d'ouvrir une PR, lance `composer ci:check` : c'est ce que la CI vérifie sur chaque pull request.
+
+## Licence
+
+Froova est un logiciel libre distribué sous [licence MIT](LICENSE).

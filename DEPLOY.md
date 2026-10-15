@@ -85,7 +85,9 @@ Pousse le projet sur un dépôt GitHub (privé conseillé), puis dans _Settings 
 
 > Tu préfères ne pas mettre le `.env` dans GitHub ? Laisse `PRODUCTION_ENV` vide et crée le fichier `HOSTINGER_DEPLOY_PATH/shared/.env` à la main en SSH : le déploiement l'utilisera.
 
-Astuce : crée un _environment_ GitHub nommé `production` (Settings → Environments) pour y ranger ces secrets et, si tu veux, exiger une validation avant chaque mise en ligne.
+> **Dépôt public** : les logs GitHub Actions sont visibles par tous et les _variables_ y apparaissent en clair. Crée plutôt `HOSTINGER_DEPLOY_PATH` et `HOSTINGER_PUBLIC_HTML` comme **secrets** (même nom) : ils contiennent ton identifiant Hostinger et seront masqués (`***`) dans les logs. Le workflow lit le secret en priorité, puis la variable.
+
+Astuce : crée un _environment_ GitHub nommé `production` (Settings → Environments) pour y ranger ces secrets. Sur un dépôt public, limite-le à la branche `main` (_Deployment branches → Selected branches → main_) : les pull requests venant de forks n'ont de toute façon jamais accès aux secrets.
 
 ## 5. Déployer
 
