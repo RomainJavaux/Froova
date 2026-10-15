@@ -1,15 +1,15 @@
 {
     "$schema": "https://getcomposer.org/schema.json",
-    "name": "laravel/react-starter-kit",
+    "name": "froova/froova",
     "type": "project",
-    "description": "The skeleton application for the Laravel framework.",
+    "description": "Froova — gestion de congélateurs pour le batch cooking, en famille.",
     "keywords": [
         "laravel",
         "framework"
     ],
     "license": "MIT",
     "require": {
-        "php": "^8.3",
+        "php": "^8.4",
         "inertiajs/inertia-laravel": "^3.0",
         "intervention/image": "^4.3",
         "laravel/chisel": "^0.1.0",
@@ -67,7 +67,7 @@
             "@test"
         ],
         "types:check": [
-            "phpstan analyse"
+            "phpstan analyse --memory-limit=1G"
         ],
         "test": [
             "@php artisan config:clear --ansi",
@@ -98,8 +98,7 @@
         "laravel": {
             "dont-discover": [],
             "installer": {
-                "post-create-project": [
-                ]
+                "post-create-project": []
             }
         }
     },
@@ -110,6 +109,9 @@
         "allow-plugins": {
             "pestphp/pest-plugin": true,
             "php-http/discovery": true
+        },
+        "platform": {
+            "php": "8.4.1"
         }
     },
     "minimum-stability": "stable",
