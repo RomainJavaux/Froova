@@ -1,0 +1,41 @@
+{
+    "id": "/",
+    "name": "Froova — mes congélateurs",
+    "short_name": "Froova",
+    "description": "Range tes batchs, retrouve-les en un geste et partage tes congélateurs en famille.",
+    "lang": "fr",
+    "dir": "ltr",
+    "start_url": "/dashboard?source=pwa",
+    "scope": "/",
+    "display": "standalone",
+    "orientation": "portrait",
+    "background_color": "#f6f9fd",
+    "theme_color": "#6366f1",
+    "categories": ["food", "lifestyle", "productivity"],
+    "icons": [
+        { "src": "/icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+        { "src": "/icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+        { "src": "/icons/maskable-192.png", "sizes": "192x192", "type": "image/png", "purpose": "maskable" },
+        { "src": "/icons/maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+    ],
+    "shortcuts": [
+        {
+            "name": "Ranger un batch",
+            "short_name": "Ranger",
+            "url": "/items/create?source=shortcut",
+            "icons": [{ "src": "/icons/icon-192.png", "sizes": "192x192", "type": "image/png" }]
+        },
+        {
+            "name": "Prendre quelque chose",
+            "short_name": "Prendre",
+            "url": "/items?focus=1&source=shortcut",
+            "icons": [{ "src": "/icons/icon-192.png", "sizes": "192x192", "type": "image/png" }]
+        },
+        {
+            "name": "Mes congélateurs",
+            "short_name": "Congels",
+            "url": "/freezers?source=shortcut",
+            "icons": [{ "src": "/icons/icon-192.png", "sizes": "192x192", "type": "image/png" }]
+        }
+    ]
+}

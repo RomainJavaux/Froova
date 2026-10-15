@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Enums\HouseholdRole;
+use Carbon\CarbonImmutable;
 use Database\Factories\HouseholdFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -10,7 +11,6 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-use Illuminate\Support\Carbon;
 
 /**
  * @property int $id
@@ -18,8 +18,8 @@ use Illuminate\Support\Carbon;
  * @property string $emoji
  * @property string $color
  * @property int $owner_id
- * @property Carbon|null $created_at
- * @property Carbon|null $updated_at
+ * @property CarbonImmutable|null $created_at
+ * @property CarbonImmutable|null $updated_at
  */
 #[Fillable(['name', 'emoji', 'color', 'owner_id'])]
 class Household extends Model

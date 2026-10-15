@@ -17,6 +17,7 @@ import {
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { useAppearance } from '@/hooks/use-appearance';
+import { forgetOfflinePages } from '@/lib/pwa';
 import { cn } from '@/lib/utils';
 import { logout } from '@/routes';
 import { edit as editAppearance } from '@/routes/appearance';
@@ -114,6 +115,7 @@ export function UserMenu({
                     variant="destructive"
                     onSelect={() => {
                         router.flushAll();
+                        forgetOfflinePages();
                         router.post(logout.url());
                     }}
                 >

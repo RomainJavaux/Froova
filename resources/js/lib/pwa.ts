@@ -35,6 +35,13 @@ export function registerServiceWorker(): void {
     });
 }
 
+/**
+ * Asks the service worker to drop the pages it kept for offline use.
+ */
+export function forgetOfflinePages(): void {
+    navigator.serviceWorker?.controller?.postMessage({ type: 'logout' });
+}
+
 export function isStandalone(): boolean {
     if (typeof window === 'undefined') {
         return false;

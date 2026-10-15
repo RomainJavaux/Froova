@@ -51,7 +51,7 @@ class SaveFreezer
         $existing = $freezer->compartments()->get()->keyBy('id');
         $kept = [];
 
-        foreach (array_values($compartments) as $index => $data) {
+        foreach ($compartments as $index => $data) {
             $compartment = isset($data['id']) ? $existing->get($data['id']) : null;
 
             $attributes = [
