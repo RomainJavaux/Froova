@@ -1,7 +1,9 @@
 <?php
 
+use App\Http\Middleware\EnsureUserHasHousehold;
 use App\Http\Middleware\HandleAppearance;
 use App\Http\Middleware\HandleInertiaRequests;
+use App\Http\Middleware\RememberPasskeyLogins;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
@@ -18,9 +20,14 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->encryptCookies(except: ['appearance', 'sidebar_state']);
 
         $middleware->web(append: [
+            RememberPasskeyLogins::class,
             HandleAppearance::class,
             HandleInertiaRequests::class,
             AddLinkHeadersForPreloadedAssets::class,
+        ]);
+
+        $middleware->alias([
+            'household' => EnsureUserHasHousehold::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

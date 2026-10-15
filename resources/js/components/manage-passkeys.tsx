@@ -1,5 +1,5 @@
 import { router } from '@inertiajs/react';
-import { KeyRound } from 'lucide-react';
+import { Fingerprint } from 'lucide-react';
 import { destroy } from '@/actions/Laravel/Passkeys/Http/Controllers/PasskeyRegistrationController';
 import Heading from '@/components/heading';
 import PasskeyItem from '@/components/passkey-item';
@@ -9,20 +9,6 @@ import type { Passkey } from '@/types/auth';
 export type Props = {
     canManagePasskeys?: boolean;
     passkeys?: Passkey[];
-};
-
-const EmptyState = () => {
-    return (
-        <div className="p-8 text-center">
-            <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-muted">
-                <KeyRound className="h-7 w-7 text-muted-foreground" />
-            </div>
-            <p className="font-medium">No passkeys yet</p>
-            <p className="mt-1 text-sm text-muted-foreground">
-                Add a passkey to sign in without a password
-            </p>
-        </div>
-    );
 };
 
 export default function ManagePasskeys(props: Props) {
@@ -35,37 +21,40 @@ export default function ManagePasskeys(props: Props) {
         });
     };
 
-    const handleRegisterSuccess = () => {
-        router.reload();
-    };
-
     if (!(props.canManagePasskeys ?? false)) {
         return null;
     }
 
     return (
-        <div className="space-y-6">
-            <Heading
-                variant="small"
-                title="Passkeys"
-                description="Manage your passkeys for passwordless sign-in"
-            />
+        <div className="surface space-y-6 overflow-hidden p-5 sm:p-6">
+            <div className="flex items-start gap-4">
+                <span className="grid size-12 shrink-0 place-items-center rounded-2xl bg-emerald-500 text-white shadow-[0_10px_24px_-10px_rgb(16_185_129)]">
+                    <Fingerprint className="size-6" />
+                </span>
+                <Heading
+                    variant="small"
+                    title="Connexion express"
+                    description="Ajoute une passkey sur chacun de tes appareils : tu te connecteras avec Face ID, ton empreinte ou le code de ton téléphone, sans mot de passe."
+                />
+            </div>
 
-            <div className="overflow-hidden rounded-lg border border-border">
-                {passkeys.length > 0 ? (
-                    passkeys.map((passkey) => (
+            {passkeys.length > 0 ? (
+                <div className="overflow-hidden rounded-2xl border border-border">
+                    {passkeys.map((passkey) => (
                         <PasskeyItem
                             key={passkey.id}
                             passkey={passkey}
                             onDelete={handleDelete}
                         />
-                    ))
-                ) : (
-                    <EmptyState />
-                )}
-            </div>
+                    ))}
+                </div>
+            ) : (
+                <p className="rounded-2xl bg-muted/70 px-4 py-3 text-sm text-muted-foreground">
+                    Aucune passkey pour l’instant.
+                </p>
+            )}
 
-            <PasskeyRegistration onSuccess={handleRegisterSuccess} />
+            <PasskeyRegistration onSuccess={() => router.reload()} />
         </div>
     );
 }
