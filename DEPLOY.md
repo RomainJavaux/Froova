@@ -20,7 +20,7 @@ Structure créée sur le serveur :
 └── public_html → froova/current/public
 ```
 
-> Au premier déploiement, le dossier `public_html` existant est renommé en `public_html.backup-…` puis remplacé par un lien vers l'application.
+> Au premier déploiement, le contenu existant du dossier web (`HOSTINGER_PUBLIC_HTML`) est déplacé dans `froova/web-root-backup-…` (hors du web) puis remplacé par un lien vers l’application.
 
 ---
 

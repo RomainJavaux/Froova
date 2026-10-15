@@ -29,7 +29,8 @@ switch_to() {
 
     if [ -n "$PUBLIC_HTML" ]; then
         if [ -e "$PUBLIC_HTML" ] && [ ! -L "$PUBLIC_HTML" ]; then
-            backup="$PUBLIC_HTML.backup-$(date +%Y%m%d%H%M%S)"
+            # Kept next to the releases, outside any web root, so it never becomes downloadable.
+            backup="$DEPLOY_PATH/web-root-backup-$(date +%Y%m%d%H%M%S)"
             log "Moving the existing web root to $backup"
             mv "$PUBLIC_HTML" "$backup"
         fi
