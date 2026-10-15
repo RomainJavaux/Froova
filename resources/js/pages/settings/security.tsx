@@ -3,17 +3,16 @@ import { useRef } from 'react';
 import SecurityController from '@/actions/App/Http/Controllers/Settings/SecurityController';
 import Heading from '@/components/heading';
 import InputError from '@/components/input-error';
+import ManagePasskeys from '@/components/manage-passkeys';
+import type { Props as ManagePasskeysProps } from '@/components/manage-passkeys';
 import PasswordInput from '@/components/password-input';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
-import { edit } from '@/routes/security';
-import type { Props as ManagePasskeysProps } from '@/components/manage-passkeys';
-import ManagePasskeys from '@/components/manage-passkeys';
+import { Spinner } from '@/components/ui/spinner';
 
-// oxfmt-ignore
 type Props = {
     passwordRules: string;
-} & ManagePasskeysProps ;
+} & ManagePasskeysProps;
 
 export default function Security(props: Props) {
     const passwordInput = useRef<HTMLInputElement>(null);
@@ -21,22 +20,23 @@ export default function Security(props: Props) {
 
     return (
         <>
-            <Head title="Security settings" />
+            <Head title="Sécurité" />
 
-            <h1 className="sr-only">Security settings</h1>
+            <ManagePasskeys
+                canManagePasskeys={props.canManagePasskeys}
+                passkeys={props.passkeys}
+            />
 
-            <div className="space-y-6">
+            <div className="surface space-y-6 p-5 sm:p-6">
                 <Heading
                     variant="small"
-                    title="Update password"
-                    description="Ensure your account is using a long, random password to stay secure"
+                    title="Mot de passe"
+                    description="Choisis un mot de passe long et unique."
                 />
 
                 <Form
                     {...SecurityController.update.form()}
-                    options={{
-                        preserveScroll: true,
-                    }}
+                    options={{ preserveScroll: true }}
                     resetOnError={[
                         'password',
                         'password_confirmation',
@@ -52,88 +52,62 @@ export default function Security(props: Props) {
                             currentPasswordInput.current?.focus();
                         }
                     }}
-                    className="space-y-6"
+                    className="space-y-5"
                 >
                     {({ errors, processing }) => (
                         <>
                             <div className="grid gap-2">
                                 <Label htmlFor="current_password">
-                                    Current password
+                                    Mot de passe actuel
                                 </Label>
-
                                 <PasswordInput
                                     id="current_password"
                                     ref={currentPasswordInput}
                                     name="current_password"
-                                    className="mt-1 block w-full"
                                     autoComplete="current-password"
-                                    placeholder="Current password"
                                 />
-
                                 <InputError message={errors.current_password} />
                             </div>
 
                             <div className="grid gap-2">
-                                <Label htmlFor="password">New password</Label>
-
+                                <Label htmlFor="password">
+                                    Nouveau mot de passe
+                                </Label>
                                 <PasswordInput
                                     id="password"
                                     ref={passwordInput}
                                     name="password"
-                                    className="mt-1 block w-full"
                                     autoComplete="new-password"
-                                    placeholder="New password"
                                     passwordrules={props.passwordRules}
                                 />
-
                                 <InputError message={errors.password} />
                             </div>
 
                             <div className="grid gap-2">
                                 <Label htmlFor="password_confirmation">
-                                    Confirm password
+                                    Confirmation
                                 </Label>
-
                                 <PasswordInput
                                     id="password_confirmation"
                                     name="password_confirmation"
-                                    className="mt-1 block w-full"
                                     autoComplete="new-password"
-                                    placeholder="Confirm password"
                                     passwordrules={props.passwordRules}
                                 />
-
                                 <InputError
                                     message={errors.password_confirmation}
                                 />
                             </div>
 
-                            <div className="flex items-center gap-4">
-                                <Button
-                                    disabled={processing}
-                                    data-test="update-password-button"
-                                >
-                                    Save
-                                </Button>
-                            </div>
+                            <Button
+                                disabled={processing}
+                                data-test="update-password-button"
+                            >
+                                {processing && <Spinner />} Mettre à jour
+                            </Button>
                         </>
                     )}
                 </Form>
             </div>
-
-            <ManagePasskeys
-                canManagePasskeys={props.canManagePasskeys}
-                passkeys={props.passkeys}
-            />
         </>
     );
 }
-
-Security.layout = {
-    breadcrumbs: [
-        {
-            title: 'Security settings',
-            href: edit(),
-        },
-    ],
-};

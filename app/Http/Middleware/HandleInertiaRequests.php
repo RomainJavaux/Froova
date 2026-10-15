@@ -2,7 +2,11 @@
 
 namespace App\Http\Middleware;
 
+use App\Models\Household;
+use App\Models\User;
+use App\Support\Catalog;
 use Illuminate\Http\Request;
+use Inertia\Inertia;
 use Inertia\Middleware;
 
 class HandleInertiaRequests extends Middleware
@@ -35,13 +39,51 @@ class HandleInertiaRequests extends Middleware
      */
     public function share(Request $request): array
     {
+        $user = $request->user();
+
         return [
             ...parent::share($request),
             'name' => config('app.name'),
             'auth' => [
-                'user' => $request->user(),
+                'user' => $user instanceof User ? [
+                    'id' => $user->id,
+                    'name' => $user->name,
+                    'email' => $user->email,
+                    'email_verified_at' => $user->email_verified_at?->toIso8601String(),
+                    'created_at' => $user->created_at?->toIso8601String(),
+                    'updated_at' => $user->updated_at?->toIso8601String(),
+                ] : null,
             ],
-            'sidebarOpen' => ! $request->hasCookie('sidebar_state') || $request->cookie('sidebar_state') === 'true',
+            'household' => fn () => $user instanceof User ? $this->household($request, $user) : null,
+            'households' => fn () => $user instanceof User
+                ? $user->households->map(fn (Household $household) => [
+                    'id' => $household->id,
+                    'name' => $household->name,
+                    'emoji' => $household->emoji,
+                    'color' => $household->color,
+                ])->values()
+                : [],
+            'catalog' => Inertia::once(fn () => Catalog::toArray()),
+        ];
+    }
+
+    /**
+     * @return array<string, mixed>|null
+     */
+    private function household(Request $request, User $user): ?array
+    {
+        $household = $request->attributes->get('household') ?? $user->activeHousehold();
+
+        if (! $household instanceof Household) {
+            return null;
+        }
+
+        return [
+            'id' => $household->id,
+            'name' => $household->name,
+            'emoji' => $household->emoji,
+            'color' => $household->color,
+            'role' => $household->roleOf($user)?->value,
         ];
     }
 }

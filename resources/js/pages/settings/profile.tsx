@@ -3,88 +3,76 @@ import ProfileController from '@/actions/App/Http/Controllers/Settings/ProfileCo
 import DeleteUser from '@/components/delete-user';
 import Heading from '@/components/heading';
 import InputError from '@/components/input-error';
+import { MemberAvatar } from '@/components/member-avatar';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { edit } from '@/routes/profile';
-import type { Auth } from '@/types';
-
-type PageProps = {
-    auth: Auth;
-};
+import { Spinner } from '@/components/ui/spinner';
 
 export default function Profile() {
-    const { auth } = usePage<PageProps>().props;
+    const { auth } = usePage().props;
+    const user = auth.user;
+
+    if (!user) {
+        return null;
+    }
 
     return (
         <>
-            <Head title="Profile settings" />
+            <Head title="Profil" />
 
-            <h1 className="sr-only">Profile settings</h1>
-
-            <div className="space-y-6">
-                <Heading
-                    variant="small"
-                    title="Profile"
-                    description="Update your name and email address"
-                />
+            <div className="surface space-y-6 p-5 sm:p-6">
+                <div className="flex items-center gap-4">
+                    <MemberAvatar
+                        name={user.name}
+                        id={user.id}
+                        className="size-16 text-xl"
+                    />
+                    <Heading
+                        variant="small"
+                        title="Profil"
+                        description="Ton nom est visible par les membres de tes lieux."
+                    />
+                </div>
 
                 <Form
                     {...ProfileController.update.form()}
-                    options={{
-                        preserveScroll: true,
-                    }}
-                    className="space-y-6"
+                    options={{ preserveScroll: true }}
+                    className="space-y-5"
                 >
                     {({ processing, errors }) => (
                         <>
                             <div className="grid gap-2">
-                                <Label htmlFor="name">Name</Label>
-
+                                <Label htmlFor="name">Nom</Label>
                                 <Input
                                     id="name"
-                                    className="mt-1 block w-full"
-                                    defaultValue={auth.user.name}
+                                    defaultValue={user.name}
                                     name="name"
                                     required
                                     autoComplete="name"
-                                    placeholder="Full name"
                                 />
-
-                                <InputError
-                                    className="mt-2"
-                                    message={errors.name}
-                                />
+                                <InputError message={errors.name} />
                             </div>
 
                             <div className="grid gap-2">
-                                <Label htmlFor="email">Email address</Label>
-
+                                <Label htmlFor="email">Adresse e-mail</Label>
                                 <Input
                                     id="email"
                                     type="email"
-                                    className="mt-1 block w-full"
-                                    defaultValue={auth.user.email}
+                                    defaultValue={user.email}
                                     name="email"
                                     required
                                     autoComplete="username"
-                                    placeholder="Email address"
                                 />
-
-                                <InputError
-                                    className="mt-2"
-                                    message={errors.email}
-                                />
+                                <InputError message={errors.email} />
                             </div>
 
-                            <div className="flex items-center gap-4">
-                                <Button
-                                    disabled={processing}
-                                    data-test="update-profile-button"
-                                >
-                                    Save
-                                </Button>
-                            </div>
+                            <Button
+                                disabled={processing}
+                                data-test="update-profile-button"
+                            >
+                                {processing && <Spinner />} Enregistrer
+                            </Button>
                         </>
                     )}
                 </Form>
@@ -94,12 +82,3 @@ export default function Profile() {
         </>
     );
 }
-
-Profile.layout = {
-    breadcrumbs: [
-        {
-            title: 'Profile settings',
-            href: edit(),
-        },
-    ],
-};

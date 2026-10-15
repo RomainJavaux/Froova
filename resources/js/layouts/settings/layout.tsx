@@ -1,76 +1,65 @@
 import { Link } from '@inertiajs/react';
+import { Palette, ShieldCheck, UserRound } from 'lucide-react';
+import { motion } from 'motion/react';
 import type { PropsWithChildren } from 'react';
-import Heading from '@/components/heading';
-import { Button } from '@/components/ui/button';
-import { Separator } from '@/components/ui/separator';
+import { PageHeader } from '@/components/page-header';
 import { useCurrentUrl } from '@/hooks/use-current-url';
 import { cn, toUrl } from '@/lib/utils';
 import { edit as editAppearance } from '@/routes/appearance';
 import { edit } from '@/routes/profile';
 import { edit as editSecurity } from '@/routes/security';
-import type { NavItem } from '@/types';
 
-const sidebarNavItems: NavItem[] = [
-    {
-        title: 'Profile',
-        href: edit(),
-        icon: null,
-    },
-    {
-        title: 'Security',
-        href: editSecurity(),
-        icon: null,
-    },
-    {
-        title: 'Appearance',
-        href: editAppearance(),
-        icon: null,
-    },
+const NAV = [
+    { title: 'Profil', href: edit(), icon: UserRound },
+    { title: 'Sécurité', href: editSecurity(), icon: ShieldCheck },
+    { title: 'Apparence', href: editAppearance(), icon: Palette },
 ];
 
 export default function SettingsLayout({ children }: PropsWithChildren) {
     const { isCurrentOrParentUrl } = useCurrentUrl();
 
     return (
-        <div className="px-4 py-6">
-            <Heading
-                title="Settings"
-                description="Manage your profile and account settings"
-            />
+        <div>
+            <PageHeader eyebrow="Mon compte" title="Réglages" />
 
-            <div className="flex flex-col lg:flex-row lg:space-x-12">
-                <aside className="w-full max-w-xl lg:w-48">
+            <div className="flex flex-col gap-6 lg:flex-row lg:gap-12">
+                <aside className="lg:w-56">
                     <nav
-                        className="flex flex-col space-y-1 space-x-0"
-                        aria-label="Settings"
+                        className="no-scrollbar -mx-4 flex gap-1 overflow-x-auto px-4 lg:mx-0 lg:flex-col lg:px-0"
+                        aria-label="Réglages"
                     >
-                        {sidebarNavItems.map((item, index) => (
-                            <Button
-                                key={`${toUrl(item.href)}-${index}`}
-                                size="sm"
-                                variant="ghost"
-                                asChild
-                                className={cn('w-full justify-start', {
-                                    'bg-muted': isCurrentOrParentUrl(item.href),
-                                })}
-                            >
-                                <Link href={item.href}>
-                                    {item.icon && (
-                                        <item.icon className="h-4 w-4" />
+                        {NAV.map((item) => {
+                            const active = isCurrentOrParentUrl(item.href);
+
+                            return (
+                                <Link
+                                    key={toUrl(item.href)}
+                                    href={item.href}
+                                    className={cn(
+                                        'relative flex h-11 shrink-0 items-center gap-2.5 rounded-2xl px-4 text-sm font-semibold transition-colors',
+                                        active
+                                            ? 'text-foreground'
+                                            : 'text-muted-foreground hover:text-foreground',
                                     )}
-                                    {item.title}
+                                >
+                                    {active && (
+                                        <motion.span
+                                            layoutId="settings-active"
+                                            className="absolute inset-0 rounded-2xl bg-card shadow-[var(--shadow-soft)] ring-1 ring-[var(--hairline)]"
+                                        />
+                                    )}
+                                    <item.icon className="relative size-4" />
+                                    <span className="relative">
+                                        {item.title}
+                                    </span>
                                 </Link>
-                            </Button>
-                        ))}
+                            );
+                        })}
                     </nav>
                 </aside>
 
-                <Separator className="my-6 lg:hidden" />
-
-                <div className="flex-1 md:max-w-2xl">
-                    <section className="max-w-xl space-y-12">
-                        {children}
-                    </section>
+                <div className="min-w-0 flex-1 lg:max-w-2xl">
+                    <section className="space-y-10">{children}</section>
                 </div>
             </div>
         </div>

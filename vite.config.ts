@@ -13,8 +13,15 @@ export default defineConfig({
             input: ['resources/css/app.css', 'resources/js/app.tsx'],
             refresh: true,
             fonts: [
-                bunny('Instrument Sans', {
-                    weights: [400, 500, 600],
+                bunny('Plus Jakarta Sans', {
+                    weights: [400, 500, 600, 700, 800],
+                    subsets: ['latin', 'latin-ext'],
+                    preload: [{ weight: 400 }, { weight: 600 }],
+                }),
+                bunny('Bricolage Grotesque', {
+                    weights: [600, 700, 800],
+                    subsets: ['latin', 'latin-ext'],
+                    preload: [{ weight: 700 }],
                 }),
             ],
         }),

@@ -1,16 +1,17 @@
 import { Form, Head } from '@inertiajs/react';
+import { useState } from 'react';
 import InputError from '@/components/input-error';
+import PasskeyVerify from '@/components/passkey-verify';
 import PasswordInput from '@/components/password-input';
 import TextLink from '@/components/text-link';
 import { Button } from '@/components/ui/button';
-import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Spinner } from '@/components/ui/spinner';
+import { Switch } from '@/components/ui/switch';
 import { register } from '@/routes';
 import { store } from '@/routes/login';
 import { request } from '@/routes/password';
-import PasskeyVerify from '@/components/passkey-verify';
 
 type Props = {
     status?: string;
@@ -18,9 +19,17 @@ type Props = {
 };
 
 export default function Login({ status, canResetPassword }: Props) {
+    const [remember, setRemember] = useState(true);
+
     return (
         <>
-            <Head title="Log in" />
+            <Head title="Connexion" />
+
+            {status && (
+                <div className="mb-6 rounded-2xl bg-emerald-500/10 px-4 py-3 text-sm font-medium text-emerald-700 dark:text-emerald-300">
+                    {status}
+                </div>
+            )}
 
             <PasskeyVerify />
 
@@ -31,9 +40,9 @@ export default function Login({ status, canResetPassword }: Props) {
             >
                 {({ processing, errors }) => (
                     <>
-                        <div className="grid gap-6">
+                        <div className="grid gap-5">
                             <div className="grid gap-2">
-                                <Label htmlFor="email">Email address</Label>
+                                <Label htmlFor="email">Adresse e-mail</Label>
                                 <Input
                                     id="email"
                                     type="email"
@@ -41,22 +50,24 @@ export default function Login({ status, canResetPassword }: Props) {
                                     required
                                     autoFocus
                                     tabIndex={1}
-                                    autoComplete="email"
-                                    placeholder="email@example.com"
+                                    autoComplete="email webauthn"
+                                    placeholder="toi@exemple.fr"
                                 />
                                 <InputError message={errors.email} />
                             </div>
 
                             <div className="grid gap-2">
                                 <div className="flex items-center">
-                                    <Label htmlFor="password">Password</Label>
+                                    <Label htmlFor="password">
+                                        Mot de passe
+                                    </Label>
                                     {canResetPassword && (
                                         <TextLink
                                             href={request()}
                                             className="ml-auto text-sm"
                                             tabIndex={5}
                                         >
-                                            Forgot your password?
+                                            Oublié ?
                                         </TextLink>
                                     )}
                                 </div>
@@ -66,52 +77,59 @@ export default function Login({ status, canResetPassword }: Props) {
                                     required
                                     tabIndex={2}
                                     autoComplete="current-password"
-                                    placeholder="Password"
+                                    placeholder="••••••••"
                                 />
                                 <InputError message={errors.password} />
                             </div>
 
-                            <div className="flex items-center space-x-3">
-                                <Checkbox
+                            <label
+                                htmlFor="remember"
+                                className="flex cursor-pointer items-center justify-between gap-4 rounded-2xl bg-muted/70 px-4 py-3"
+                            >
+                                <span>
+                                    <span className="block text-sm font-semibold">
+                                        Rester connecté
+                                    </span>
+                                    <span className="block text-xs text-muted-foreground">
+                                        Ouvre l’app directement, sans te
+                                        reconnecter.
+                                    </span>
+                                </span>
+                                <Switch
                                     id="remember"
                                     name="remember"
-                                    tabIndex={3}
+                                    checked={remember}
+                                    onCheckedChange={setRemember}
                                 />
-                                <Label htmlFor="remember">Remember me</Label>
-                            </div>
+                            </label>
 
                             <Button
                                 type="submit"
-                                className="mt-4 w-full"
+                                size="lg"
+                                className="mt-2 w-full"
                                 tabIndex={4}
                                 disabled={processing}
                                 data-test="login-button"
                             >
                                 {processing && <Spinner />}
-                                Log in
+                                Se connecter
                             </Button>
                         </div>
 
                         <div className="text-center text-sm text-muted-foreground">
-                            Don't have an account?{' '}
+                            Pas encore de compte ?{' '}
                             <TextLink href={register()} tabIndex={5}>
-                                Sign up
+                                Créer un compte
                             </TextLink>
                         </div>
                     </>
                 )}
             </Form>
-
-            {status && (
-                <div className="mb-4 text-center text-sm font-medium text-green-600">
-                    {status}
-                </div>
-            )}
         </>
     );
 }
 
 Login.layout = {
-    title: 'Log in to your account',
-    description: 'Enter your email and password below to log in',
+    title: 'Content de te revoir 👋',
+    description: 'Connecte-toi pour retrouver tes congélateurs.',
 };
