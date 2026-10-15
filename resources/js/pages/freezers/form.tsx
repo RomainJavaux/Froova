@@ -81,7 +81,7 @@ export default function FreezerForm({ freezer }: { freezer: Freezer | null }) {
 
             <form
                 onSubmit={submit}
-                className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_380px] lg:gap-12"
+                className="grid grid-cols-1 gap-8 lg:grid-cols-[minmax(0,1fr)_380px] lg:gap-12"
             >
                 <div className="order-2 space-y-9 lg:order-1">
                     <FreezerConfigurator
@@ -96,7 +96,7 @@ export default function FreezerForm({ freezer }: { freezer: Freezer | null }) {
                         <h2 className="font-display text-lg font-bold">
                             Infos pratiques
                         </h2>
-                        <div className="grid gap-3 sm:grid-cols-2">
+                        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                             <label className="space-y-1.5">
                                 <span className="text-sm font-semibold">
                                     Dernier dégivrage
@@ -186,7 +186,7 @@ export default function FreezerForm({ freezer }: { freezer: Freezer | null }) {
                             type="button"
                             variant="secondary"
                             size="lg"
-                            className="lg:w-auto"
+                            className="px-5 lg:w-auto"
                             onClick={() => window.history.back()}
                         >
                             Annuler
@@ -194,7 +194,7 @@ export default function FreezerForm({ freezer }: { freezer: Freezer | null }) {
                         <Button
                             type="submit"
                             size="lg"
-                            className="flex-1 lg:w-64 lg:flex-none"
+                            className="min-w-0 flex-1 lg:w-64 lg:flex-none"
                             disabled={form.processing}
                         >
                             {form.processing ? (
@@ -202,7 +202,16 @@ export default function FreezerForm({ freezer }: { freezer: Freezer | null }) {
                             ) : (
                                 <Check className="size-5" />
                             )}
-                            {editing ? 'Enregistrer' : 'Créer le congélateur'}
+                            {editing ? (
+                                'Enregistrer'
+                            ) : (
+                                <>
+                                    <span className="sm:hidden">Créer</span>
+                                    <span className="hidden sm:inline">
+                                        Créer le congélateur
+                                    </span>
+                                </>
+                            )}
                         </Button>
                     </div>
                 </div>

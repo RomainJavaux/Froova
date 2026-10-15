@@ -137,13 +137,15 @@ export default function FreezerShow({ freezer, focus }: Props) {
                 }
             />
 
-            <div className="grid gap-8 lg:grid-cols-[minmax(0,400px)_minmax(0,1fr)] lg:gap-10">
+            <div className="grid grid-cols-1 gap-8 lg:grid-cols-[minmax(0,400px)_minmax(0,1fr)] lg:gap-10">
                 {/* Freezer */}
                 <div className="lg:sticky lg:top-10 lg:self-start">
                     <div className="relative">
                         <div
-                            className="absolute inset-x-8 top-10 bottom-0 -z-10 rounded-full opacity-40 blur-3xl"
-                            style={{ background: gradient(palette) }}
+                            className="absolute inset-x-0 -inset-y-6 -z-10 opacity-50"
+                            style={{
+                                background: `radial-gradient(ellipse at center, ${palette.to}, transparent 65%)`,
+                            }}
                         />
                         <FreezerVisual
                             type={freezer.type}

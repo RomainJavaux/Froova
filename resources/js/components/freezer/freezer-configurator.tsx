@@ -206,10 +206,10 @@ export function FreezerConfigurator({
                                 {active && (
                                     <motion.span
                                         layoutId="freezer-type-active"
-                                        className="absolute inset-0 rounded-3xl ring-[2.5px] ring-primary"
+                                        className="absolute inset-0 rounded-3xl"
                                         style={{
                                             boxShadow:
-                                                '0 16px 36px -18px var(--primary)',
+                                                '0 0 0 2.5px var(--primary), 0 16px 36px -18px var(--primary)',
                                         }}
                                         transition={{
                                             type: 'spring',

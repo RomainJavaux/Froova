@@ -125,7 +125,7 @@ export default function Onboarding({
                         <StepFrame key="welcome" direction={direction}>
                             <div className="grid items-center gap-10 py-6 lg:grid-cols-2 lg:py-16">
                                 <div className="relative order-2 mx-auto w-full max-w-sm lg:order-1">
-                                    <div className="absolute inset-0 -z-10 rounded-full bg-[radial-gradient(circle,rgb(99_102_241/0.35),transparent_65%)] blur-2xl" />
+                                    <div className="absolute inset-0 -z-10 rounded-full bg-[radial-gradient(circle,rgb(99_102_241/0.35),transparent_70%)]" />
                                     <FreezerVisual
                                         type="upright"
                                         color="frost"
@@ -331,7 +331,7 @@ export default function Onboarding({
                                     Tu pourras tout modifier plus tard.
                                 </p>
 
-                                <div className="mt-8 grid gap-8 lg:grid-cols-[minmax(0,1fr)_360px] lg:gap-12">
+                                <div className="mt-8 grid grid-cols-1 gap-8 lg:grid-cols-[minmax(0,1fr)_360px] lg:gap-12">
                                     <FreezerConfigurator
                                         value={form.data.freezer}
                                         onChange={(freezer) =>
@@ -424,9 +424,9 @@ function StepFrame({
     return (
         <motion.div
             custom={direction}
-            initial={{ opacity: 0, x: direction * 60, filter: 'blur(6px)' }}
-            animate={{ opacity: 1, x: 0, filter: 'blur(0px)' }}
-            exit={{ opacity: 0, x: direction * -60, filter: 'blur(6px)' }}
+            initial={{ opacity: 0, x: direction * 60 }}
+            animate={{ opacity: 1, x: 0, transitionEnd: { transform: 'none' } }}
+            exit={{ opacity: 0, x: direction * -60 }}
             transition={{ type: 'spring', stiffness: 260, damping: 30 }}
         >
             {children}

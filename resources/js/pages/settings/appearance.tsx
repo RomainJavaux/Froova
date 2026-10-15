@@ -46,7 +46,7 @@ export default function AppearancePage() {
                     description="Choisis le thème de l’application sur cet appareil."
                 />
 
-                <div className="grid gap-3 sm:grid-cols-3">
+                <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
                     {OPTIONS.map((option) => {
                         const active = appearance === option.value;
 

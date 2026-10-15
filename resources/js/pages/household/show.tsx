@@ -142,32 +142,34 @@ export default function HouseholdShow({
                 className="relative mb-8 overflow-hidden rounded-[32px] p-6 text-white shadow-[var(--shadow-float)] sm:p-8"
                 style={{ background: gradient(palette, 135) }}
             >
-                <div className="absolute inset-0 bg-[radial-gradient(circle_at_90%_10%,rgb(255_255_255/0.35),transparent_45%)]" />
-                <div className="relative flex flex-wrap items-center gap-5">
-                    <motion.div
-                        className="grid size-20 place-items-center rounded-[26px] bg-white/25 text-5xl shadow-inner backdrop-blur"
-                        whileHover={{ rotate: -8, scale: 1.05 }}
-                    >
-                        {current.emoji}
-                    </motion.div>
-                    <div className="min-w-0 flex-1">
-                        <h2 className="font-display text-3xl font-extrabold">
-                            {current.name}
-                        </h2>
-                        <p className="mt-1 text-sm font-medium text-white/85">
-                            {memberList.length} membre
-                            {memberList.length > 1 ? 's' : ''} ·{' '}
-                            {stats.freezers} congélateur
-                            {stats.freezers > 1 ? 's' : ''} · {stats.items}{' '}
-                            batchs
-                            {stats.createdAt &&
-                                ` · depuis ${formatDate(stats.createdAt, { month: 'long', year: 'numeric' })}`}
-                        </p>
+                <div className="absolute inset-0 bg-[radial-gradient(circle_at_90%_10%,rgb(255_255_255/0.3),transparent_45%),linear-gradient(160deg,rgb(15_23_42/0.12),rgb(15_23_42/0.3))]" />
+                <div className="relative flex flex-col gap-5 sm:flex-row sm:items-center">
+                    <div className="flex min-w-0 flex-1 items-center gap-5">
+                        <motion.div
+                            className="grid size-20 shrink-0 place-items-center rounded-[26px] bg-white/25 text-5xl shadow-inner backdrop-blur"
+                            whileHover={{ rotate: -8, scale: 1.05 }}
+                        >
+                            {current.emoji}
+                        </motion.div>
+                        <div className="min-w-0 flex-1">
+                            <h2 className="font-display text-3xl font-extrabold">
+                                {current.name}
+                            </h2>
+                            <p className="mt-1 text-sm font-medium text-white/85">
+                                {memberList.length} membre
+                                {memberList.length > 1 ? 's' : ''} ·{' '}
+                                {stats.freezers} congélateur
+                                {stats.freezers > 1 ? 's' : ''} · {stats.items}{' '}
+                                batchs
+                                {stats.createdAt &&
+                                    ` · depuis ${formatDate(stats.createdAt, { month: 'long', year: 'numeric' })}`}
+                            </p>
+                        </div>
                     </div>
                     {can.update && (
                         <Button
                             variant="secondary"
-                            className="bg-white/90 text-slate-900 hover:bg-white"
+                            className="w-full bg-white/90 text-slate-900 hover:bg-white sm:w-auto"
                             onClick={() => setSheet('edit')}
                         >
                             <Pencil className="size-4" /> Personnaliser
@@ -176,7 +178,7 @@ export default function HouseholdShow({
                 </div>
             </motion.section>
 
-            <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_340px]">
+            <div className="grid grid-cols-1 gap-8 lg:grid-cols-[minmax(0,1fr)_340px]">
                 <div className="space-y-8">
                     {/* Members */}
                     <section>

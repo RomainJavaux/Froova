@@ -148,14 +148,15 @@ export default function ItemsIndex({ items, finished, freezers }: Props) {
             {/* Search */}
             <div className="sticky top-[calc(env(safe-area-inset-top)+4.5rem)] z-20 -mx-4 mb-4 px-4 pb-2 lg:top-4 lg:mx-0 lg:px-0">
                 <div className="relative">
-                    <Search className="pointer-events-none absolute top-1/2 left-5 size-5 -translate-y-1/2 text-muted-foreground" />
+                    <Search className="pointer-events-none absolute top-1/2 left-5 z-10 size-5 -translate-y-1/2 text-muted-foreground" />
                     <input
                         ref={searchRef}
                         value={query}
                         onChange={(event) => setQuery(event.target.value)}
                         placeholder="Lasagnes, soupe, poulet…"
                         className="glass-strong h-14 w-full rounded-[22px] pr-12 pl-14 text-base font-medium shadow-[var(--shadow-float)] outline-none placeholder:text-muted-foreground/70 focus:ring-4 focus:ring-ring/25"
-                        type="search"
+                        type="text"
+                        inputMode="search"
                         enterKeyHint="search"
                     />
                     <AnimatePresence>
@@ -320,7 +321,7 @@ export default function ItemsIndex({ items, finished, freezers }: Props) {
                         <LayoutGroup>
                             <motion.div
                                 layout
-                                className="grid gap-3 md:grid-cols-2"
+                                className="grid grid-cols-1 gap-3 md:grid-cols-2"
                             >
                                 <AnimatePresence mode="popLayout">
                                     {filtered.map((item, index) => (
@@ -343,7 +344,7 @@ export default function ItemsIndex({ items, finished, freezers }: Props) {
                     description="Les batchs entièrement mangés apparaîtront ici, prêts à être refaits."
                 />
             ) : (
-                <div className="grid gap-3 md:grid-cols-2">
+                <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
                     {finished.map((item, index) => (
                         <motion.div
                             key={item.id}
