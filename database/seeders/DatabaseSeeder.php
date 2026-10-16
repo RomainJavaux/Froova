@@ -91,7 +91,6 @@ class DatabaseSeeder extends Seeder
 
             $item = new Item([
                 'household_id' => $household->id,
-                'compartment_id' => $compartment->id,
                 'name' => $name,
                 'emoji' => $emoji,
                 'category' => $category,
@@ -105,11 +104,16 @@ class DatabaseSeeder extends Seeder
                 'tags' => $tags,
             ]);
 
-            $inventory->add($item, $index % 3 === 0 ? $partner : $user);
+            // The big lasagne batch is split between the kitchen freezer and the garage chest.
+            $placements = $name === 'Lasagnes bolognaise'
+                ? [['compartment_id' => $compartment->id, 'quantity' => 6], ['compartment_id' => $g[2]->id, 'quantity' => $quantity - 6]]
+                : [['compartment_id' => $compartment->id, 'quantity' => $quantity]];
+
+            $inventory->add($item, $index % 3 === 0 ? $partner : $user, $placements);
         }
 
         $lasagnes = Item::query()->where('name', 'Lasagnes bolognaise')->firstOrFail();
-        $inventory->take($lasagnes, $partner, 2);
+        $inventory->take($lasagnes, $partner, 2, $k[0]->id);
         $inventory->take(Item::query()->where('name', 'Croissants')->firstOrFail(), $user, 4);
     }
 }

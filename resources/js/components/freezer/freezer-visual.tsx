@@ -20,6 +20,10 @@ type FreezerVisualProps = {
     name?: string;
     compartments: VisualCompartment[];
     selectedId?: number | string | null;
+    /** Several compartments at once (a batch spread over drawers). */
+    selectedIds?: (number | string)[];
+    /** Small label per compartment id, e.g. the quantity stored there. */
+    badges?: Record<string, string>;
     highlightId?: number | string | null;
     onSelect?: (id: number | string) => void;
     size?: FreezerSize;
@@ -64,6 +68,8 @@ export function FreezerVisual({
     name,
     compartments,
     selectedId = null,
+    selectedIds,
+    badges = {},
     highlightId = null,
     onSelect,
     size = 'md',
@@ -74,12 +80,14 @@ export function FreezerVisual({
     const palette = findColor(catalog, color);
     const width = WIDTHS[size][type];
     const instanceId = useId();
+    const selection = selectedIds ?? (selectedId !== null ? [selectedId] : []);
 
     const shared = {
         palette,
         name,
         compartments,
-        selectedId,
+        selection,
+        badges,
         highlightId,
         onSelect,
         size,
@@ -107,7 +115,8 @@ type InnerProps = {
     palette: PaletteColor;
     name?: string;
     compartments: VisualCompartment[];
-    selectedId: number | string | null;
+    selection: (number | string)[];
+    badges: Record<string, string>;
     highlightId: number | string | null;
     onSelect?: (id: number | string) => void;
     size: FreezerSize;
@@ -312,7 +321,8 @@ function ComboFreezer(props: InnerProps) {
 
 function DrawerStack({
     compartments,
-    selectedId,
+    selection,
+    badges,
     highlightId,
     onSelect,
     size,
@@ -335,10 +345,17 @@ function DrawerStack({
                         size={size}
                         palette={palette}
                         variant={variant}
-                        ringId={`ring-${instanceId}`}
-                        selected={selectedId === compartment.id}
+                        // A sliding ring only makes sense for a single selection.
+                        ringId={
+                            selection.length === 1
+                                ? `ring-${instanceId}`
+                                : undefined
+                        }
+                        badge={badges[String(compartment.id)]}
+                        selected={selection.includes(compartment.id)}
                         dimmed={
-                            selectedId !== null && selectedId !== compartment.id
+                            selection.length > 0 &&
+                            !selection.includes(compartment.id)
                         }
                         highlighted={highlightId === compartment.id}
                         onSelect={onSelect}
@@ -357,6 +374,7 @@ function Drawer({
     palette,
     variant,
     ringId,
+    badge,
     selected,
     dimmed,
     highlighted,
@@ -368,7 +386,8 @@ function Drawer({
     size: FreezerSize;
     palette: PaletteColor;
     variant: 'glass' | 'solid';
-    ringId: string;
+    ringId?: string;
+    badge?: string;
     selected: boolean;
     dimmed: boolean;
     highlighted: boolean;
@@ -443,6 +462,10 @@ function Drawer({
                     className="absolute inset-0 rounded-[inherit] ring-[2.5px] ring-inset"
                     style={{ ['--tw-ring-color' as string]: palette.to }}
                 />
+            )}
+
+            {badge && !tiny && (
+                <QuantityBadge label={badge} color={palette.to} />
             )}
 
             {highlighted && (
@@ -545,7 +568,8 @@ function ChestFreezer({
     palette,
     name,
     compartments,
-    selectedId,
+    selection,
+    badges,
     highlightId,
     onSelect,
     size,
@@ -597,7 +621,10 @@ function ChestFreezer({
                     >
                         <AnimatePresence initial={false}>
                             {compartments.map((compartment, index) => {
-                                const selected = selectedId === compartment.id;
+                                const selected = selection.includes(
+                                    compartment.id,
+                                );
+                                const badge = badges[String(compartment.id)];
                                 const itemsCount = compartment.itemsCount ?? 0;
 
                                 return (
@@ -630,7 +657,8 @@ function ChestFreezer({
                                         initial={{ opacity: 0, scale: 0.7 }}
                                         animate={{
                                             opacity:
-                                                selectedId !== null && !selected
+                                                selection.length > 0 &&
+                                                !selected
                                                     ? 0.55
                                                     : 1,
                                             scale: selected ? 1.06 : 1,
@@ -675,6 +703,12 @@ function ChestFreezer({
                                                     ['--tw-ring-color' as string]:
                                                         palette.to,
                                                 }}
+                                            />
+                                        )}
+                                        {badge && !tiny && (
+                                            <QuantityBadge
+                                                label={badge}
+                                                color={palette.to}
                                             />
                                         )}
                                         {highlightId === compartment.id && (
@@ -780,5 +814,19 @@ function ChestFreezer({
             </div>
             <Feet size={size} />
         </div>
+    );
+}
+
+function QuantityBadge({ label, color }: { label: string; color: string }) {
+    return (
+        <motion.span
+            initial={{ scale: 0 }}
+            animate={{ scale: 1 }}
+            transition={{ type: 'spring', stiffness: 500, damping: 22 }}
+            className="absolute top-1 right-1 z-10 rounded-full px-1.5 py-px text-[10px] leading-4 font-extrabold text-white shadow-md"
+            style={{ background: color }}
+        >
+            {label}
+        </motion.span>
     );
 }

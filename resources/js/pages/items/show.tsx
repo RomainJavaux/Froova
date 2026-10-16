@@ -44,7 +44,12 @@ import {
     DropdownMenuSeparator,
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { findCategory, unitWord, useCatalog } from '@/lib/catalog';
+import {
+    findCategory,
+    formatQuantity,
+    unitWord,
+    useCatalog,
+} from '@/lib/catalog';
 import { formatDate, freshnessLabel } from '@/lib/dates';
 import { cn } from '@/lib/utils';
 import freezersRoutes from '@/routes/freezers';
@@ -358,36 +363,95 @@ export default function ItemShow({
                     )}
 
                     {item.location && freezer ? (
-                        <Link
-                            href={freezersRoutes.show(freezer.id, {
-                                query: {
-                                    compartment: item.location.compartmentId,
-                                    item: item.id,
-                                },
-                            })}
-                            className="surface group block p-5 transition hover:shadow-[var(--shadow-float)]"
-                        >
-                            <p className="mb-1 flex items-center gap-1.5 text-sm font-semibold text-muted-foreground">
-                                <MapPin className="size-4" /> Il se trouve ici
+                        <div className="surface p-5">
+                            <p className="mb-2 flex items-center gap-1.5 text-sm font-semibold text-muted-foreground">
+                                <MapPin className="size-4" />
+                                {item.locations.length > 1
+                                    ? `Réparti dans ${item.locations.length} tiroirs`
+                                    : 'Il se trouve ici'}
                             </p>
-                            <p className="font-display text-lg font-bold">
-                                {item.location.freezerName} ›{' '}
-                                {item.location.compartmentName}
-                            </p>
-                            <div className="mt-4">
+                            <ul className="-mx-3 space-y-1">
+                                {item.locations.map((location) => (
+                                    <li key={location.compartmentId}>
+                                        <Link
+                                            href={freezersRoutes.show(
+                                                location.freezerId,
+                                                {
+                                                    query: {
+                                                        compartment:
+                                                            location.compartmentId,
+                                                        item: item.id,
+                                                    },
+                                                },
+                                            )}
+                                            className="flex items-center justify-between gap-3 rounded-2xl px-3 py-2 transition hover:bg-accent"
+                                        >
+                                            <span className="min-w-0">
+                                                <span className="block truncate font-display font-bold">
+                                                    {location.compartmentName}
+                                                </span>
+                                                <span className="block truncate text-xs text-muted-foreground">
+                                                    {location.freezerName}
+                                                </span>
+                                            </span>
+                                            <span className="shrink-0 rounded-full bg-primary/10 px-2.5 py-0.5 text-sm font-bold text-primary tabular-nums">
+                                                {formatQuantity(
+                                                    catalog,
+                                                    item.unit,
+                                                    location.quantity,
+                                                )}
+                                            </span>
+                                        </Link>
+                                    </li>
+                                ))}
+                            </ul>
+                            {item.unplacedQuantity > 0 && (
+                                <button
+                                    type="button"
+                                    onClick={() => setSheet('move')}
+                                    className="mt-2 w-full rounded-2xl bg-muted px-3 py-2 text-left text-sm font-semibold"
+                                >
+                                    📍{' '}
+                                    {formatQuantity(
+                                        catalog,
+                                        item.unit,
+                                        item.unplacedQuantity,
+                                    )}{' '}
+                                    à ranger
+                                </button>
+                            )}
+                            <Link
+                                href={freezersRoutes.show(freezer.id, {
+                                    query: {
+                                        compartment:
+                                            item.location.compartmentId,
+                                        item: item.id,
+                                    },
+                                })}
+                                className="group mt-4 block"
+                            >
                                 <FreezerVisual
                                     type={freezer.type}
                                     color={freezer.color}
                                     name={freezer.name}
                                     compartments={freezer.compartments}
-                                    selectedId={item.location.compartmentId}
+                                    selectedIds={item.locations
+                                        .filter(
+                                            (location) =>
+                                                location.freezerId ===
+                                                freezer.id,
+                                        )
+                                        .map(
+                                            (location) =>
+                                                location.compartmentId,
+                                        )}
                                     size="sm"
                                 />
-                            </div>
-                            <p className="mt-4 text-center text-sm font-semibold text-primary group-hover:underline">
-                                Ouvrir le congélateur →
-                            </p>
-                        </Link>
+                                <p className="mt-4 text-center text-sm font-semibold text-primary group-hover:underline">
+                                    Ouvrir le congélateur →
+                                </p>
+                            </Link>
+                        </div>
                     ) : (
                         !finished && (
                             <button
@@ -423,6 +487,7 @@ export default function ItemShow({
             />
             <RestockSheet
                 item={item}
+                freezers={freezers}
                 open={sheet === 'restock'}
                 onOpenChange={close}
             />

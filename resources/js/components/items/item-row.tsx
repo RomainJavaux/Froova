@@ -83,9 +83,13 @@ export const ItemRow = forwardRef<HTMLDivElement, ItemRowProps>(
                                 {formatQuantity(
                                     catalog,
                                     item.unit,
-                                    item.quantity,
+                                    item.hereQuantity ?? item.quantity,
                                 )}
                             </span>
+                            {item.hereQuantity !== null &&
+                                item.hereQuantity !== item.quantity && (
+                                    <span>· {item.quantity} au total</span>
+                                )}
                             {item.servings && (
                                 <span>· {item.servings} pers.</span>
                             )}
@@ -156,7 +160,12 @@ export function LocationPill({
                 'inline-flex max-w-full items-center gap-1.5 rounded-full bg-muted/80 py-1 pr-2.5 pl-1 text-[11.5px] font-semibold text-foreground/75 transition hover:bg-accent hover:text-foreground',
                 className,
             )}
-            title="Voir où il se trouve"
+            title={item.locations
+                .map(
+                    (location) =>
+                        `${location.freezerName} › ${location.compartmentName} (${location.quantity})`,
+                )
+                .join('\n')}
         >
             <span
                 className="grid size-4 place-items-center rounded-full text-[9px] text-white"
@@ -167,6 +176,11 @@ export function LocationPill({
             <span className="truncate">
                 {item.location.freezerName} › {item.location.compartmentName}
             </span>
+            {item.locations.length > 1 && (
+                <span className="shrink-0 rounded-full bg-primary/12 px-1.5 text-[10.5px] font-bold text-primary">
+                    +{item.locations.length - 1}
+                </span>
+            )}
         </Link>
     );
 }

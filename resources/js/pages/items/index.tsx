@@ -70,7 +70,12 @@ export default function ItemsIndex({ items, finished, freezers }: Props) {
                 return false;
             }
 
-            if (freezerId && item.location?.freezerId !== freezerId) {
+            if (
+                freezerId &&
+                !item.locations.some(
+                    (location) => location.freezerId === freezerId,
+                )
+            ) {
                 return false;
             }
 
@@ -92,8 +97,10 @@ export default function ItemsIndex({ items, finished, freezers }: Props) {
                     item.description ?? '',
                     item.tags.join(' '),
                     findCategory(catalog, item.category)?.label ?? '',
-                    item.location?.compartmentName ?? '',
-                    item.location?.freezerName ?? '',
+                    ...item.locations.map(
+                        (location) =>
+                            `${location.compartmentName} ${location.freezerName}`,
+                    ),
                 ].join(' '),
             );
 

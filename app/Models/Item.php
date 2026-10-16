@@ -17,7 +17,6 @@ use Illuminate\Support\Facades\Storage;
 /**
  * @property int $id
  * @property int $household_id
- * @property int|null $compartment_id
  * @property int|null $created_by
  * @property string $name
  * @property string|null $emoji
@@ -38,7 +37,7 @@ use Illuminate\Support\Facades\Storage;
  * @property CarbonImmutable|null $updated_at
  */
 #[Fillable([
-    'household_id', 'compartment_id', 'created_by', 'name', 'emoji', 'category', 'description',
+    'household_id', 'created_by', 'name', 'emoji', 'category', 'description',
     'photo_path', 'quantity', 'initial_quantity', 'unit', 'servings', 'weight_grams',
     'prepared_on', 'frozen_on', 'best_before', 'tags', 'finished_at',
 ])]
@@ -72,11 +71,13 @@ class Item extends Model
     }
 
     /**
-     * @return BelongsTo<Compartment, $this>
+     * Where the batch is stored: one placement per compartment, each with part of the quantity.
+     *
+     * @return HasMany<ItemPlacement, $this>
      */
-    public function compartment(): BelongsTo
+    public function placements(): HasMany
     {
-        return $this->belongsTo(Compartment::class);
+        return $this->hasMany(ItemPlacement::class)->orderByDesc('quantity')->orderBy('id');
     }
 
     /**
@@ -100,7 +101,8 @@ class Item extends Model
      */
     public function scopeInStock(Builder $query): void
     {
-        $query->whereNull('finished_at')->where('quantity', '>', 0);
+        // Qualified: the placements pivot also has a quantity column.
+        $query->whereNull($query->qualifyColumn('finished_at'))->where($query->qualifyColumn('quantity'), '>', 0);
     }
 
     /**
@@ -108,7 +110,7 @@ class Item extends Model
      */
     public function scopeFinished(Builder $query): void
     {
-        $query->whereNotNull('finished_at');
+        $query->whereNotNull($query->qualifyColumn('finished_at'));
     }
 
     public function photoUrl(): ?string

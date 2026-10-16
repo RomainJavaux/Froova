@@ -29,9 +29,8 @@ class DashboardTest extends TestCase
     {
         [$user, $household, $freezer] = $this->userWithFreezer();
 
-        Item::factory()->create([
+        Item::factory()->placedIn($freezer->compartments->first())->create([
             'household_id' => $household->id,
-            'compartment_id' => $freezer->compartments->first()->id,
             'quantity' => 6,
         ]);
 

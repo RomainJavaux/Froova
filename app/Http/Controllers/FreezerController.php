@@ -6,7 +6,7 @@ use App\Actions\Freezers\SaveFreezer;
 use App\Http\Requests\Freezers\FreezerRequest;
 use App\Http\Resources\FreezerResource;
 use App\Models\Freezer;
-use App\Models\Item;
+use App\Services\Inventory;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
@@ -18,7 +18,7 @@ class FreezerController extends Controller
     public function index(Request $request): Response
     {
         $freezers = $this->household($request)->freezers()
-            ->with(['compartments.items' => fn ($query) => $query->inStock()->orderBy('best_before')])
+            ->with(['compartments.items' => fn ($query) => $query->inStock()->orderBy('items.best_before')])
             ->get();
 
         return Inertia::render('freezers/index', [
@@ -52,9 +52,9 @@ class FreezerController extends Controller
 
         $freezer->load(['compartments.items' => fn ($query) => $query
             ->inStock()
-            ->with('creator')
-            ->orderBy('best_before')
-            ->orderBy('name')]);
+            ->with(['creator', 'placements.compartment.freezer'])
+            ->orderBy('items.best_before')
+            ->orderBy('items.name')]);
 
         return Inertia::render('freezers/show', [
             'freezer' => FreezerResource::make($freezer)->resolve($request),
@@ -78,7 +78,7 @@ class FreezerController extends Controller
     {
         Gate::authorize('update', $freezer);
 
-        $freezer->load(['compartments' => fn ($query) => $query->withCount(['items' => fn ($items) => $items->inStock()])]);
+        $freezer->load(['compartments' => fn ($query) => $query->withCount('placements')]);
 
         return Inertia::render('freezers/form', [
             'freezer' => FreezerResource::make($freezer)->resolve($request),
@@ -99,14 +99,12 @@ class FreezerController extends Controller
         return to_route('freezers.show', $freezer);
     }
 
-    public function destroy(Freezer $freezer): RedirectResponse
+    public function destroy(Freezer $freezer, Inventory $inventory): RedirectResponse
     {
         Gate::authorize('delete', $freezer);
 
         // Food stays in the inventory as "to put away" rather than vanishing with the freezer.
-        Item::query()
-            ->whereIn('compartment_id', $freezer->compartments()->pluck('id'))
-            ->update(['compartment_id' => null]);
+        $inventory->rehome(array_values($freezer->compartments()->pluck('id')->all()), null);
 
         $freezer->delete();
 

@@ -346,39 +346,13 @@ export default function FreezerShow({ freezer, focus }: Props) {
             </div>
 
             <TakeSheet
-                item={
-                    taking
-                        ? {
-                              ...taking,
-                              location:
-                                  taking.location ??
-                                  locationFor(freezer, taking),
-                          }
-                        : null
-                }
+                item={taking}
+                compartmentId={selectedId}
                 open={taking !== null}
                 onOpenChange={(open) => !open && setTaking(null)}
             />
         </>
     );
-}
-
-function locationFor(freezer: Freezer, item: Item): Item['location'] {
-    const compartment = freezer.compartments.find(
-        (candidate) => candidate.id === item.compartmentId,
-    );
-
-    return compartment
-        ? {
-              freezerId: freezer.id,
-              freezerName: freezer.name,
-              freezerColor: freezer.color,
-              freezerType: freezer.type,
-              compartmentId: compartment.id,
-              compartmentName: compartment.name,
-              compartmentPosition: compartment.position,
-          }
-        : null;
 }
 
 function MiniStat({

@@ -36,7 +36,9 @@ class FreezerTest extends TestCase
         [$user, $household, $freezer] = $this->userWithFreezer();
         [$first, $second, $third] = $freezer->compartments->all();
 
-        $item = Item::factory()->create(['household_id' => $household->id, 'compartment_id' => $third->id]);
+        $item = Item::factory()->placedIn($third, 2)->create(['household_id' => $household->id, 'quantity' => 2]);
+        // Already partly in the first remaining drawer: both shares must merge.
+        $split = Item::factory()->placedIn($second, 1)->placedIn($third, 3)->create(['household_id' => $household->id, 'quantity' => 4]);
 
         $this->actingAs($user)->put(route('freezers.update', $freezer), [
             'name' => 'Congel',
@@ -51,7 +53,9 @@ class FreezerTest extends TestCase
         $this->assertSame(['Soupes', 'Plats'], $freezer->fresh()->compartments->pluck('name')->all());
         $this->assertModelMissing($third);
         // Food from a removed drawer lands in the first remaining one.
-        $this->assertSame($second->id, $item->fresh()->compartment_id);
+        $this->assertSame([[$second->id, 2]], $item->placements()->get()->map(fn ($placement) => [$placement->compartment_id, $placement->quantity])->all());
+        $this->assertSame([[$second->id, 4]], $split->placements()->get()->map(fn ($placement) => [$placement->compartment_id, $placement->quantity])->all());
+        $this->assertSame(4, $split->fresh()->quantity);
     }
 
     public function test_compartment_count_is_limited_by_freezer_type()
@@ -70,7 +74,7 @@ class FreezerTest extends TestCase
     {
         [$user, $household, $freezer] = $this->userWithFreezer();
 
-        Item::factory()->create(['household_id' => $household->id, 'compartment_id' => $freezer->compartments->first()->id, 'name' => 'Lasagnes']);
+        Item::factory()->placedIn($freezer->compartments->first())->create(['household_id' => $household->id, 'name' => 'Lasagnes']);
 
         $this->actingAs($user)
             ->get(route('freezers.show', $freezer))
@@ -83,12 +87,14 @@ class FreezerTest extends TestCase
     public function test_deleting_a_freezer_keeps_its_food_as_unsorted()
     {
         [$user, $household, $freezer] = $this->userWithFreezer();
-        $item = Item::factory()->create(['household_id' => $household->id, 'compartment_id' => $freezer->compartments->first()->id]);
+        $item = Item::factory()->placedIn($freezer->compartments[0], 2)->placedIn($freezer->compartments[1], 3)->create(['household_id' => $household->id, 'quantity' => 5]);
 
         $this->actingAs($user)->delete(route('freezers.destroy', $freezer))->assertRedirect(route('freezers.index'));
 
         $this->assertModelMissing($freezer);
-        $this->assertNull($item->fresh()->compartment_id);
+        // Both shares end up merged in a single "to put away" placement.
+        $this->assertSame([[null, 5]], $item->placements()->get()->map(fn ($placement) => [$placement->compartment_id, $placement->quantity])->all());
+        $this->assertSame(5, $item->fresh()->quantity);
     }
 
     public function test_freezers_of_other_households_are_off_limits()

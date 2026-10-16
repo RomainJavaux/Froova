@@ -59,10 +59,10 @@ class Freezer extends Model
     }
 
     /**
-     * @return HasManyThrough<Item, Compartment, $this>
+     * @return HasManyThrough<ItemPlacement, Compartment, $this>
      */
-    public function items(): HasManyThrough
+    public function placements(): HasManyThrough
     {
-        return $this->hasManyThrough(Item::class, Compartment::class);
+        return $this->hasManyThrough(ItemPlacement::class, Compartment::class);
     }
 }

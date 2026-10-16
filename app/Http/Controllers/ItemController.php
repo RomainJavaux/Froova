@@ -6,6 +6,7 @@ use App\Enums\ItemCategory;
 use App\Http\Requests\Items\ItemRequest;
 use App\Http\Resources\ItemResource;
 use App\Http\Resources\MovementResource;
+use App\Models\Compartment;
 use App\Models\Freezer;
 use App\Models\Household;
 use App\Models\Item;
@@ -34,7 +35,7 @@ class ItemController extends Controller
 
         $items = $household->items()
             ->inStock()
-            ->with('compartment.freezer')
+            ->with('placements.compartment.freezer')
             ->orderBy('best_before')
             ->orderBy('name')
             ->get();
@@ -64,7 +65,7 @@ class ItemController extends Controller
         return Inertia::render('items/form', [
             'item' => null,
             'source' => $source ? ItemResource::make($source)->resolve($request) : null,
-            'defaultCompartmentId' => $request->integer('compartment') ?: $source?->compartment_id,
+            'defaultCompartmentId' => $request->integer('compartment') ?: $source?->placements()->value('compartment_id'),
             'freezers' => $this->freezerOptions($household),
             'suggestions' => $this->suggestions($household),
         ]);
@@ -76,7 +77,7 @@ class ItemController extends Controller
         $data = $request->validated();
 
         $item = new Item([
-            ...Arr::except($data, ['photo', 'remove_photo']),
+            ...Arr::except($data, ['photo', 'remove_photo', 'placements']),
             'household_id' => $household->id,
             'best_before' => $data['best_before'] ?? $this->defaultBestBefore($data),
             'tags' => $this->cleanTags($data['tags'] ?? []),
@@ -88,12 +89,14 @@ class ItemController extends Controller
             $item->photo_path = $this->copyPhotoFrom($household, $request->integer('photo_from'));
         }
 
-        $this->inventory->add($item, $this->user($request));
+        $placements = $request->placements();
+        $this->inventory->add($item, $this->user($request), $placements);
 
-        $compartment = $request->compartment();
+        $compartment = Compartment::query()->findOrFail($placements[0]['compartment_id']);
+        $where = count($placements) > 1 ? count($placements).' tiroirs' : $compartment->name;
 
         Inertia::flash('celebrate', true);
-        $this->toast("{$item->name} rangé dans {$compartment->name} ❄️");
+        $this->toast("{$item->name} rangé dans {$where} ❄️");
 
         return to_route('freezers.show', [
             'freezer' => $compartment->freezer_id,
@@ -111,7 +114,7 @@ class ItemController extends Controller
             $request->attributes->set('household', $item->household);
         }
 
-        $item->load(['compartment.freezer', 'creator']);
+        $item->load(['placements.compartment.freezer', 'creator']);
 
         $movements = $item->movements()
             ->with(['user', 'fromCompartment', 'toCompartment'])
@@ -129,12 +132,12 @@ class ItemController extends Controller
     {
         Gate::authorize('update', $item);
 
-        $item->load('compartment.freezer');
+        $item->load('placements.compartment.freezer');
 
         return Inertia::render('items/form', [
             'item' => ItemResource::make($item)->resolve($request),
             'source' => null,
-            'defaultCompartmentId' => $item->compartment_id,
+            'defaultCompartmentId' => null,
             'freezers' => $this->freezerOptions($item->household),
             'suggestions' => [],
         ]);
@@ -145,18 +148,12 @@ class ItemController extends Controller
         Gate::authorize('update', $item);
 
         $data = $request->validated();
-        $previousCompartment = $item->compartment_id;
 
         $item->fill([
-            ...Arr::except($data, ['photo', 'remove_photo', 'compartment_id']),
+            ...Arr::except($data, ['photo', 'remove_photo', 'placements']),
             'best_before' => $data['best_before'] ?? $this->defaultBestBefore($data),
             'tags' => $this->cleanTags($data['tags'] ?? []),
         ]);
-
-        if (isset($data['quantity'])) {
-            $item->initial_quantity = max($item->initial_quantity, $item->quantity);
-            $item->finished_at = null;
-        }
 
         if ($request->hasFile('photo')) {
             $this->photos->delete($item->photo_path);
@@ -167,11 +164,7 @@ class ItemController extends Controller
         }
 
         $item->save();
-        $this->inventory->updated($item, $this->user($request));
-
-        if ($previousCompartment !== (int) $data['compartment_id']) {
-            $this->inventory->move($item, $this->user($request), $request->compartment());
-        }
+        $this->inventory->relocate($item, $this->user($request), $request->placements());
 
         $this->toast('Modifications enregistrées');
 
@@ -198,7 +191,7 @@ class ItemController extends Controller
     private function freezerOptions(Household $household): array
     {
         return array_values($household->freezers()
-            ->with(['compartments' => fn ($query) => $query->withCount(['items' => fn ($items) => $items->inStock()])])
+            ->with(['compartments' => fn ($query) => $query->withCount('placements')])
             ->get()
             ->map(fn (Freezer $freezer) => [
                 'id' => $freezer->id,
@@ -210,7 +203,7 @@ class ItemController extends Controller
                     'id' => $compartment->id,
                     'name' => $compartment->name,
                     'position' => $compartment->position,
-                    'itemsCount' => (int) $compartment->getAttribute('items_count'),
+                    'itemsCount' => (int) $compartment->getAttribute('placements_count'),
                 ])->values()->all(),
             ])
             ->all());

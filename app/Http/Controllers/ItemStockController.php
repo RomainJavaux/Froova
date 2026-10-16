@@ -9,6 +9,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 
 class ItemStockController extends Controller
@@ -20,10 +21,19 @@ class ItemStockController extends Controller
         Gate::authorize('update', $item);
 
         $validated = $request->validate([
-            'quantity' => ['required', 'integer', 'min:1', 'max:'.max(1, $item->quantity)],
+            'compartment_id' => ['nullable', 'integer'],
         ]);
 
-        $item = $this->inventory->take($item, $this->user($request), (int) $validated['quantity']);
+        // From a given compartment, at most what is stored there.
+        $available = isset($validated['compartment_id'])
+            ? (int) $item->placements()->where('compartment_id', $validated['compartment_id'])->sum('quantity')
+            : $item->quantity;
+
+        $validated += $request->validate([
+            'quantity' => ['required', 'integer', 'min:1', 'max:'.max(1, $available)],
+        ]);
+
+        $item = $this->inventory->take($item, $this->user($request), (int) $validated['quantity'], $validated['compartment_id'] ?? null);
 
         $unit = $item->unit;
 
@@ -48,6 +58,10 @@ class ItemStockController extends Controller
 
         $compartment = $this->compartmentFor($item, $validated['compartment_id'] ?? null);
 
+        if ($compartment === null && ! $item->placements()->exists()) {
+            throw ValidationException::withMessages(['compartment_id' => 'Choisis le tiroir où tu ranges ces portions.']);
+        }
+
         $item = $this->inventory->restock($item, $this->user($request), (int) $validated['quantity'], $compartment);
 
         Inertia::flash('celebrate', true);
@@ -62,12 +76,22 @@ class ItemStockController extends Controller
 
         $validated = $request->validate([
             'compartment_id' => ['required', 'integer'],
+            'from_compartment_id' => ['nullable', 'integer'],
+            'from_unplaced' => ['sometimes', 'boolean'],
+            'quantity' => ['nullable', 'integer', 'min:1', 'max:999'],
         ]);
 
         $compartment = $this->compartmentFor($item, (int) $validated['compartment_id']);
         abort_if($compartment === null, 422);
 
-        $this->inventory->move($item, $this->user($request), $compartment);
+        $this->inventory->move(
+            $item,
+            $this->user($request),
+            $compartment,
+            $validated['from_compartment_id'] ?? null,
+            isset($validated['quantity']) ? (int) $validated['quantity'] : null,
+            $request->boolean('from_unplaced'),
+        );
 
         $this->toast("{$item->name} déplacé dans {$compartment->name}");
 

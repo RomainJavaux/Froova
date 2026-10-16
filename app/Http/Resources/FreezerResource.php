@@ -7,6 +7,7 @@ use App\Models\Freezer;
 use App\Models\Item;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
+use Illuminate\Support\Collection;
 
 /**
  * @mixin Freezer
@@ -28,8 +29,10 @@ class FreezerResource extends JsonResource
                 'name' => $compartment->name,
                 'color' => $compartment->color,
                 'position' => $compartment->position,
-                'itemsCount' => $items?->count() ?? (int) ($compartment->getAttribute('items_count') ?? 0),
-                'units' => (int) ($items?->sum('quantity') ?? $compartment->getAttribute('items_sum_quantity') ?? 0),
+                'itemsCount' => $items?->count() ?? (int) ($compartment->getAttribute('placements_count') ?? 0),
+                // Only the part of each batch stored in this compartment counts here.
+                'units' => (int) ($items?->sum(fn (Item $item) => (int) $item->getRelationValue('pivot')?->getAttribute('quantity'))
+                    ?? $compartment->getAttribute('placements_sum_quantity') ?? 0),
                 'expiringCount' => $items
                     ? $items->filter(fn (Item $item) => $item->best_before !== null
                         && $item->best_before->lte(now()->addDays(ItemResource::SOON_THRESHOLD_DAYS)))->count()
@@ -51,11 +54,33 @@ class FreezerResource extends JsonResource
             'lastDefrostedOn' => $this->last_defrosted_on?->toDateString(),
             'position' => $this->position,
             'compartments' => $compartmentData->all(),
-            'stats' => [
-                'items' => $compartmentData->sum('itemsCount'),
-                'units' => $compartmentData->sum('units'),
-                'expiring' => $compartmentData->sum(fn (array $compartment) => $compartment['expiringCount'] ?? 0),
-            ],
+            'stats' => $this->stats($compartments, (int) $compartmentData->sum('itemsCount'), (int) $compartmentData->sum('units')),
+        ];
+    }
+
+    /**
+     * A batch spread over several drawers still counts once for the whole freezer.
+     *
+     * @param  Collection<int, Compartment>  $compartments
+     * @return array{items: int, units: int, expiring: int}
+     */
+    private function stats(Collection $compartments, int $placementsCount, int $units): array
+    {
+        if ($compartments->isEmpty() || ! $compartments->every(fn (Compartment $compartment) => $compartment->relationLoaded('items'))) {
+            return [
+                'items' => $placementsCount,
+                'units' => $units,
+                'expiring' => 0,
+            ];
+        }
+
+        $items = $compartments->flatMap(fn (Compartment $compartment) => $compartment->items)->unique('id');
+
+        return [
+            'items' => $items->count(),
+            'units' => $units,
+            'expiring' => $items->filter(fn (Item $item) => $item->best_before !== null
+                && $item->best_before->lte(now()->addDays(ItemResource::SOON_THRESHOLD_DAYS)))->count(),
         ];
     }
 }

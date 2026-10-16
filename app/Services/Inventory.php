@@ -6,45 +6,74 @@ use App\Enums\MovementType;
 use App\Models\Compartment;
 use App\Models\Item;
 use App\Models\ItemMovement;
+use App\Models\ItemPlacement;
 use App\Models\User;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
+use InvalidArgumentException;
 
 /**
  * Every change to the freezer stock goes through here so the activity log stays complete.
+ *
+ * A batch can be split across several compartments (placements); `items.quantity` is always
+ * the sum of its placements.
  */
 class Inventory
 {
-    public function add(Item $item, User $user): Item
+    /**
+     * @param  list<array{compartment_id: int|null, quantity: int}>  $placements
+     */
+    public function add(Item $item, User $user, array $placements): Item
     {
-        return DB::transaction(function () use ($item, $user) {
+        $placements = $this->normalize($placements);
+
+        return DB::transaction(function () use ($item, $user, $placements) {
+            $total = $placements->sum('quantity');
+
             $item->fill([
                 'created_by' => $user->id,
-                'initial_quantity' => $item->quantity,
+                'quantity' => $total,
+                'initial_quantity' => $total,
+                'finished_at' => null,
             ])->save();
 
-            $this->record($item, $user, MovementType::Added, $item->quantity, toCompartmentId: $item->compartment_id);
+            foreach ($placements as $placement) {
+                $item->placements()->create($placement);
+                $this->record($item, $user, MovementType::Added, $placement['quantity'], toCompartmentId: $placement['compartment_id']);
+            }
 
             return $item;
         });
     }
 
-    public function take(Item $item, User $user, int $quantity): Item
+    /**
+     * Take portions, from a given compartment or (without one) from the biggest placements first.
+     */
+    public function take(Item $item, User $user, int $quantity, ?int $compartmentId = null): Item
     {
-        return DB::transaction(function () use ($item, $user, $quantity) {
+        return DB::transaction(function () use ($item, $user, $quantity, $compartmentId) {
             $item = Item::query()->lockForUpdate()->findOrFail($item->id);
-            $quantity = min($quantity, $item->quantity);
+            $placements = $item->placements()->lockForUpdate()->get();
 
-            $item->quantity -= $quantity;
-
-            if ($item->quantity === 0) {
-                $item->finished_at = now();
+            if ($compartmentId !== null) {
+                $placements = $placements->where('compartment_id', $compartmentId)->values();
             }
 
-            $item->save();
+            $remaining = $quantity;
 
-            $this->record($item, $user, MovementType::Taken, $quantity, fromCompartmentId: $item->compartment_id);
+            foreach ($placements as $placement) {
+                if ($remaining <= 0) {
+                    break;
+                }
 
-            return $item;
+                $taken = min($remaining, $placement->quantity);
+                $this->decrement($placement, $taken);
+                $remaining -= $taken;
+
+                $this->record($item, $user, MovementType::Taken, $taken, fromCompartmentId: $placement->compartment_id);
+            }
+
+            return $this->refreshQuantity($item);
         });
     }
 
@@ -53,47 +82,87 @@ class Inventory
         return DB::transaction(function () use ($item, $user, $quantity, $compartment) {
             $item = Item::query()->lockForUpdate()->findOrFail($item->id);
 
-            $item->quantity += $quantity;
-            $item->initial_quantity = max($item->initial_quantity, $item->quantity);
-            $item->finished_at = null;
-
-            if ($compartment !== null) {
-                $item->compartment_id = $compartment->id;
+            if ($compartment === null && ! $item->placements()->exists()) {
+                throw new InvalidArgumentException('A compartment is required to restock a finished batch.');
             }
 
-            $item->save();
+            // Without a compartment, the portions join the batch's main placement.
+            $compartmentId = $compartment->id ?? $item->placements()->value('compartment_id');
 
-            $this->record($item, $user, MovementType::Restocked, $quantity, toCompartmentId: $item->compartment_id);
+            $this->increment($item, $compartmentId, $quantity);
+            $this->record($item, $user, MovementType::Restocked, $quantity, toCompartmentId: $compartmentId);
+
+            $item = $this->refreshQuantity($item);
+            $item->initial_quantity = max($item->initial_quantity, $item->quantity);
+            $item->save();
 
             return $item;
         });
     }
 
-    public function move(Item $item, User $user, Compartment $compartment): Item
+    /**
+     * Move portions from one placement (the main one by default) to another compartment.
+     */
+    public function move(Item $item, User $user, Compartment $to, ?int $fromCompartmentId = null, ?int $quantity = null, bool $fromUnplaced = false): Item
     {
-        if ($item->compartment_id === $compartment->id) {
-            return $item;
-        }
+        return DB::transaction(function () use ($item, $user, $to, $fromCompartmentId, $quantity, $fromUnplaced) {
+            $source = $item->placements()
+                ->when($fromUnplaced, fn ($query) => $query->whereNull('compartment_id'))
+                ->when(! $fromUnplaced && $fromCompartmentId !== null, fn ($query) => $query->where('compartment_id', $fromCompartmentId))
+                ->lockForUpdate()
+                ->first();
 
-        return DB::transaction(function () use ($item, $user, $compartment) {
-            $from = $item->compartment_id;
+            if ($source === null || $source->compartment_id === $to->id) {
+                return $item;
+            }
 
-            $item->compartment()->associate($compartment)->save();
+            $moved = min($quantity ?? $source->quantity, $source->quantity);
+            $from = $source->compartment_id;
 
-            $this->record($item, $user, MovementType::Moved, null, $from, $compartment->id);
+            $this->decrement($source, $moved);
+            $this->increment($item, $to->id, $moved);
 
-            return $item;
+            $this->record($item, $user, MovementType::Moved, $moved, $from, $to->id);
+
+            return $this->refreshQuantity($item);
         });
     }
 
     public function discard(Item $item, User $user, ?string $note = null): Item
     {
         return DB::transaction(function () use ($item, $user, $note) {
-            $quantity = $item->quantity;
+            $placements = $item->placements()->get();
+            $from = $placements->count() === 1 ? $placements->first()?->compartment_id : null;
 
-            $item->fill(['quantity' => 0, 'finished_at' => now()])->save();
+            $this->record($item, $user, MovementType::Discarded, $item->quantity, fromCompartmentId: $from, note: $note);
 
-            $this->record($item, $user, MovementType::Discarded, $quantity, fromCompartmentId: $item->compartment_id, note: $note);
+            $item->placements()->delete();
+
+            return $this->refreshQuantity($item);
+        });
+    }
+
+    /**
+     * Replace where a batch is stored (edit form). The batch keeps its history.
+     *
+     * @param  list<array{compartment_id: int|null, quantity: int}>  $placements
+     */
+    public function relocate(Item $item, User $user, array $placements): Item
+    {
+        $placements = $this->normalize($placements);
+
+        return DB::transaction(function () use ($item, $user, $placements) {
+            $item->placements()->delete();
+
+            foreach ($placements as $placement) {
+                $item->placements()->create($placement);
+            }
+
+            $item = $this->refreshQuantity($item);
+            $item->initial_quantity = max($item->initial_quantity, $item->quantity);
+            $item->save();
+
+            $this->updated($item, $user);
 
             return $item;
         });
@@ -102,6 +171,92 @@ class Inventory
     public function updated(Item $item, User $user): void
     {
         $this->record($item, $user, MovementType::Updated, null);
+    }
+
+    /**
+     * Moves placements to another compartment (or to "put away" when null), merging duplicates.
+     * Used when compartments or freezers disappear; it is a structural change, not a movement.
+     *
+     * @param  list<int>  $compartmentIds
+     */
+    public function rehome(array $compartmentIds, ?int $targetCompartmentId): void
+    {
+        if ($compartmentIds === []) {
+            return;
+        }
+
+        DB::transaction(function () use ($compartmentIds, $targetCompartmentId) {
+            ItemPlacement::query()
+                ->whereIn('compartment_id', $compartmentIds)
+                ->get()
+                ->each(function (ItemPlacement $placement) use ($targetCompartmentId) {
+                    $quantity = $placement->quantity;
+                    $placement->delete();
+
+                    $this->increment($placement->item, $targetCompartmentId, $quantity);
+                });
+        });
+    }
+
+    private function increment(Item $item, ?int $compartmentId, int $quantity): void
+    {
+        $placement = $item->placements()
+            ->where(fn ($query) => $compartmentId === null
+                ? $query->whereNull('compartment_id')
+                : $query->where('compartment_id', $compartmentId))
+            ->first();
+
+        if ($placement) {
+            $placement->increment('quantity', $quantity);
+        } else {
+            $item->placements()->create(['compartment_id' => $compartmentId, 'quantity' => $quantity]);
+        }
+    }
+
+    private function decrement(ItemPlacement $placement, int $quantity): void
+    {
+        if ($quantity >= $placement->quantity) {
+            $placement->delete();
+        } else {
+            $placement->decrement('quantity', $quantity);
+        }
+    }
+
+    /**
+     * Keep the batch total in sync with its placements, and mark it finished when empty.
+     */
+    private function refreshQuantity(Item $item): Item
+    {
+        $item->quantity = (int) $item->placements()->sum('quantity');
+        $item->finished_at = $item->quantity === 0 ? ($item->finished_at ?? now()) : null;
+        $item->save();
+        $item->unsetRelation('placements');
+
+        return $item;
+    }
+
+    /**
+     * Merge duplicate compartments and drop empty lines.
+     *
+     * @param  list<array{compartment_id: int|null, quantity: int}>  $placements
+     * @return Collection<int, array{compartment_id: int|null, quantity: int<1, max>}>
+     */
+    private function normalize(array $placements): Collection
+    {
+        $normalized = collect($placements)
+            ->groupBy(fn (array $placement) => (string) ($placement['compartment_id'] ?? ''))
+            ->map(fn (Collection $group) => [
+                'compartment_id' => $group->first()['compartment_id'] ?? null,
+                'quantity' => (int) $group->sum('quantity'),
+            ])
+            ->filter(fn (array $placement) => $placement['quantity'] > 0)
+            ->values();
+
+        if ($normalized->isEmpty()) {
+            throw new InvalidArgumentException('A batch needs at least one placement.');
+        }
+
+        return $normalized;
     }
 
     private function record(

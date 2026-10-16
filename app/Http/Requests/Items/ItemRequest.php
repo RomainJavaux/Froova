@@ -25,7 +25,6 @@ class ItemRequest extends FormRequest
             'description' => ['nullable', 'string', 'max:2000'],
             'photo' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp,gif', 'max:15360'],
             'remove_photo' => ['sometimes', 'boolean'],
-            'quantity' => [$this->isMethod('post') ? 'required' : 'sometimes', 'integer', 'min:1', 'max:999'],
             'unit' => ['required', Rule::enum(ItemUnit::class)],
             'servings' => ['nullable', 'integer', 'min:1', 'max:30'],
             'weight_grams' => ['nullable', 'integer', 'min:1', 'max:100000'],
@@ -34,7 +33,10 @@ class ItemRequest extends FormRequest
             'best_before' => ['nullable', 'date', 'after_or_equal:frozen_on'],
             'tags' => ['nullable', 'array', 'max:8'],
             'tags.*' => ['string', 'max:30'],
-            'compartment_id' => ['required', 'integer', $this->compartmentBelongsToHousehold()],
+            // Where the batch goes: one or several compartments, each with its share of the quantity.
+            'placements' => ['required', 'array', 'min:1', 'max:24'],
+            'placements.*.compartment_id' => ['required', 'integer', 'distinct', $this->compartmentBelongsToHousehold()],
+            'placements.*.quantity' => ['required', 'integer', 'min:1', 'max:999'],
         ];
     }
 
@@ -44,7 +46,9 @@ class ItemRequest extends FormRequest
     public function attributes(): array
     {
         return [
-            'compartment_id' => 'emplacement',
+            'placements' => 'emplacement',
+            'placements.*.compartment_id' => 'emplacement',
+            'placements.*.quantity' => 'quantité',
             'frozen_on' => 'date de congélation',
             'prepared_on' => 'date de préparation',
             'best_before' => 'date limite',
@@ -53,9 +57,26 @@ class ItemRequest extends FormRequest
         ];
     }
 
-    public function compartment(): Compartment
+    /**
+     * @return list<array{compartment_id: int, quantity: int}>
+     */
+    public function placements(): array
     {
-        return Compartment::query()->findOrFail($this->integer('compartment_id'));
+        return array_values(array_map(fn (array $placement) => [
+            'compartment_id' => (int) $placement['compartment_id'],
+            'quantity' => (int) $placement['quantity'],
+        ], (array) $this->validated('placements')));
+    }
+
+    /**
+     * @return array<string, string>
+     */
+    public function messages(): array
+    {
+        return [
+            'placements.required' => 'Touche au moins un tiroir pour ranger ton batch.',
+            'placements.*.compartment_id.distinct' => 'Ce tiroir est choisi deux fois.',
+        ];
     }
 
     private function compartmentBelongsToHousehold(): Closure

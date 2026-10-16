@@ -14,6 +14,8 @@ export type ItemLocation = {
     compartmentId: number;
     compartmentName: string;
     compartmentPosition: number;
+    /** Part of the batch stored in this compartment. */
+    quantity: number;
 };
 
 export type Item = {
@@ -36,8 +38,14 @@ export type Item = {
     finishedAt: string | null;
     createdAt: string | null;
     freshness: Freshness;
+    /** Main location (biggest part); a batch can be spread over several compartments. */
     compartmentId: number | null;
     location: ItemLocation | null;
+    locations: ItemLocation[];
+    /** Portions left without a compartment (its freezer was deleted). */
+    unplacedQuantity: number;
+    /** Quantity in the compartment the batch is listed under (freezer page). */
+    hereQuantity: number | null;
     createdBy?: { id: number; name: string } | null;
 };
 

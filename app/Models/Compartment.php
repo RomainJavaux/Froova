@@ -6,6 +6,7 @@ use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 /**
@@ -29,10 +30,21 @@ class Compartment extends Model
     }
 
     /**
-     * @return HasMany<Item, $this>
+     * @return HasMany<ItemPlacement, $this>
      */
-    public function items(): HasMany
+    public function placements(): HasMany
     {
-        return $this->hasMany(Item::class);
+        return $this->hasMany(ItemPlacement::class);
+    }
+
+    /**
+     * Batches with a part stored here; the pivot holds the quantity in this compartment.
+     *
+     * @return BelongsToMany<Item, $this>
+     */
+    public function items(): BelongsToMany
+    {
+        return $this->belongsToMany(Item::class, 'item_placements')
+            ->withPivot('id', 'quantity');
     }
 }

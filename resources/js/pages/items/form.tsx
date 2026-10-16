@@ -14,7 +14,7 @@ import { AnimatePresence, motion } from 'motion/react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { StepLabel } from '@/components/freezer/freezer-configurator';
 import InputError from '@/components/input-error';
-import { LocationPicker } from '@/components/items/location-picker';
+import { PlacementEditor } from '@/components/items/placement-editor';
 import { PageHeader } from '@/components/page-header';
 import { BottomSheet } from '@/components/ui/bottom-sheet';
 import { Button } from '@/components/ui/button';
@@ -32,6 +32,8 @@ import {
 import { addMonthsIso, durationLabel, formatDate, todayIso } from '@/lib/dates';
 import { useIsDesktop } from '@/hooks/use-media-query';
 import { compressImage } from '@/lib/image';
+import { totalOf, withTotal } from '@/lib/placements';
+import type { PlacementDraft } from '@/lib/placements';
 import { cn } from '@/lib/utils';
 import itemsRoutes from '@/routes/items';
 import type { FreezerOption, Item } from '@/types';
@@ -69,7 +71,7 @@ type FormData = {
     frozen_on: string;
     best_before: string;
     tags: string[];
-    compartment_id: number | null;
+    placements: PlacementDraft[];
 };
 
 const QUICK_QUANTITIES = [1, 2, 4, 6, 8, 10, 12];
@@ -103,7 +105,22 @@ export default function ItemForm({
         frozen_on: item?.frozenOn ?? today,
         best_before: item?.bestBefore ?? '',
         tags: base?.tags ?? [],
-        compartment_id: defaultCompartmentId ?? null,
+        placements: item
+            ? item.locations.map((location, index) => ({
+                  compartment_id: location.compartmentId,
+                  // Portions left without a drawer join the main one.
+                  quantity:
+                      location.quantity +
+                      (index === 0 ? item.unplacedQuantity : 0),
+              }))
+            : defaultCompartmentId
+              ? [
+                    {
+                        compartment_id: defaultCompartmentId,
+                        quantity: source?.initialQuantity ?? 4,
+                    },
+                ]
+              : [],
     });
 
     const [autoBestBefore, setAutoBestBefore] = useState(!editing);
@@ -220,9 +237,34 @@ export default function ItemForm({
         );
     };
 
-    const selectedCompartment = freezers
+    const setTotal = (value: number) =>
+        form.setData((data) => ({
+            ...data,
+            quantity: value,
+            placements: withTotal(data.placements, value),
+        }));
+
+    const setPlacements = (placements: PlacementDraft[]) =>
+        form.setData((data) => ({
+            ...data,
+            placements,
+            quantity:
+                placements.length > 0 ? totalOf(placements) : data.quantity,
+        }));
+
+    const placementsError =
+        form.errors.placements ??
+        Object.entries(form.errors).find(([key]) =>
+            key.startsWith('placements.'),
+        )?.[1];
+
+    const firstCompartment = freezers
         .flatMap((freezer) => freezer.compartments)
-        .find((compartment) => compartment.id === form.data.compartment_id);
+        .find(
+            (compartment) =>
+                compartment.id === form.data.placements[0]?.compartment_id,
+        );
+    const minimumTotal = Math.max(1, form.data.placements.length);
 
     return (
         <>
@@ -501,10 +543,8 @@ export default function ItemForm({
                         <div className="surface space-y-5 p-5">
                             <Stepper
                                 value={form.data.quantity}
-                                onChange={(value) =>
-                                    form.setData('quantity', value)
-                                }
-                                min={1}
+                                onChange={setTotal}
+                                min={minimumTotal}
                                 max={999}
                                 size="lg"
                                 suffix={unitWord(
@@ -518,11 +558,10 @@ export default function ItemForm({
                                     <button
                                         key={quantity}
                                         type="button"
-                                        onClick={() =>
-                                            form.setData('quantity', quantity)
-                                        }
+                                        disabled={quantity < minimumTotal}
+                                        onClick={() => setTotal(quantity)}
                                         className={cn(
-                                            'size-10 shrink-0 rounded-xl text-sm font-bold transition',
+                                            'size-10 shrink-0 rounded-xl text-sm font-bold transition disabled:opacity-30',
                                             form.data.quantity === quantity
                                                 ? 'bg-primary text-primary-foreground'
                                                 : 'bg-muted hover:bg-accent',
@@ -589,13 +628,13 @@ export default function ItemForm({
                         <section>
                             <StepLabel step={3} title="Où le ranger ?" />
                             <div className="surface p-4">
-                                <LocationPicker
+                                <PlacementEditor
                                     freezers={freezers}
-                                    value={form.data.compartment_id}
-                                    onChange={(id) =>
-                                        form.setData('compartment_id', id)
-                                    }
-                                    error={form.errors.compartment_id}
+                                    placements={form.data.placements}
+                                    total={form.data.quantity}
+                                    unit={form.data.unit}
+                                    onChange={setPlacements}
+                                    error={placementsError}
                                 />
                             </div>
                         </section>
@@ -835,13 +874,13 @@ export default function ItemForm({
                                 Où le ranger ?
                             </h2>
                             {isDesktop && (
-                                <LocationPicker
+                                <PlacementEditor
                                     freezers={freezers}
-                                    value={form.data.compartment_id}
-                                    onChange={(id) =>
-                                        form.setData('compartment_id', id)
-                                    }
-                                    error={form.errors.compartment_id}
+                                    placements={form.data.placements}
+                                    total={form.data.quantity}
+                                    unit={form.data.unit}
+                                    onChange={setPlacements}
+                                    error={placementsError}
                                 />
                             )}
                         </div>
@@ -875,9 +914,11 @@ export default function ItemForm({
                                 )}
                             </p>
                             <p className="truncate text-xs text-muted-foreground">
-                                {selectedCompartment
-                                    ? `→ ${selectedCompartment.name}`
-                                    : 'Choisis un tiroir'}
+                                {form.data.placements.length > 1
+                                    ? `→ ${form.data.placements.length} tiroirs`
+                                    : firstCompartment
+                                      ? `→ ${firstCompartment.name}`
+                                      : 'Choisis un tiroir'}
                             </p>
                         </div>
                         <Button

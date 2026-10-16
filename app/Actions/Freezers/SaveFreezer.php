@@ -5,10 +5,13 @@ namespace App\Actions\Freezers;
 use App\Models\Compartment;
 use App\Models\Freezer;
 use App\Models\Household;
+use App\Services\Inventory;
 use Illuminate\Support\Facades\DB;
 
 class SaveFreezer
 {
+    public function __construct(private readonly Inventory $inventory) {}
+
     /**
      * Create or update a freezer together with its ordered list of compartments.
      *
@@ -74,9 +77,7 @@ class SaveFreezer
         if ($removed->isNotEmpty()) {
             $fallback = $kept[0] ?? null;
 
-            DB::table('items')
-                ->whereIn('compartment_id', $removed->all())
-                ->update(['compartment_id' => $fallback]);
+            $this->inventory->rehome(array_values($removed->all()), $fallback);
 
             Compartment::query()->whereIn('id', $removed->all())->delete();
         }

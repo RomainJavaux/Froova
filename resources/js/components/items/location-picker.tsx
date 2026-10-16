@@ -9,31 +9,42 @@ import freezersRoutes from '@/routes/freezers';
 import type { FreezerOption } from '@/types';
 
 /**
- * Pick where a batch goes by tapping the drawer on a drawing of the freezer.
+ * Pick where a batch goes by tapping drawers on a drawing of the freezer.
+ * Tapping a drawer adds it; tapping it again removes it, so a batch can be spread over several.
  */
 export function LocationPicker({
     freezers,
-    value,
-    onChange,
+    selectedIds,
+    onToggle,
+    badges,
     error,
 }: {
     freezers: FreezerOption[];
-    value: number | null;
-    onChange: (compartmentId: number) => void;
+    selectedIds: number[];
+    onToggle: (compartmentId: number) => void;
+    badges?: Record<string, string>;
     error?: string;
 }) {
     const catalog = useCatalog();
     const owner = freezers.find((freezer) =>
-        freezer.compartments.some((compartment) => compartment.id === value),
+        freezer.compartments.some((compartment) =>
+            selectedIds.includes(compartment.id),
+        ),
     );
     const [freezerId, setFreezerId] = useState<number | null>(
         owner?.id ?? freezers[0]?.id ?? null,
     );
     const freezer =
         freezers.find((candidate) => candidate.id === freezerId) ?? null;
-    const compartment = freezers
-        .flatMap((candidate) => candidate.compartments)
-        .find((candidate) => candidate.id === value);
+    const compartments = freezers.flatMap((candidate) =>
+        candidate.compartments.map((compartment) => ({
+            ...compartment,
+            freezerName: candidate.name,
+        })),
+    );
+    const selected = compartments.filter((compartment) =>
+        selectedIds.includes(compartment.id),
+    );
 
     if (freezers.length === 0) {
         return (
@@ -59,6 +70,10 @@ export function LocationPicker({
                 <div className="no-scrollbar -mx-1 mb-4 flex gap-2 overflow-x-auto px-1 pb-1">
                     {freezers.map((option) => {
                         const active = option.id === freezerId;
+                        const picked = option.compartments.filter(
+                            (compartment) =>
+                                selectedIds.includes(compartment.id),
+                        ).length;
 
                         return (
                             <button
@@ -87,6 +102,11 @@ export function LocationPicker({
                                     }}
                                 />
                                 <span className="relative">{option.name}</span>
+                                {picked > 0 && (
+                                    <span className="relative rounded-full bg-primary px-1.5 text-[11px] text-primary-foreground tabular-nums">
+                                        {picked}
+                                    </span>
+                                )}
                             </button>
                         );
                     })}
@@ -105,8 +125,9 @@ export function LocationPicker({
                         color={freezer.color}
                         name={freezer.name}
                         compartments={freezer.compartments}
-                        selectedId={value}
-                        onSelect={(id) => onChange(Number(id))}
+                        selectedIds={selectedIds}
+                        badges={badges}
+                        onSelect={(id) => onToggle(Number(id))}
                         size="md"
                     />
                 </motion.div>
@@ -116,7 +137,7 @@ export function LocationPicker({
                 layout
                 className={cn(
                     'mt-4 flex items-center gap-2 rounded-2xl px-4 py-3 text-sm font-semibold',
-                    compartment
+                    selected.length > 0
                         ? 'bg-primary/10 text-primary'
                         : error
                           ? 'bg-destructive/10 text-destructive'
@@ -124,14 +145,19 @@ export function LocationPicker({
                 )}
             >
                 <MapPin className="size-4 shrink-0" />
-                {compartment ? (
+                {selected.length === 1 ? (
                     <span className="truncate">
-                        {owner?.name} › {compartment.name}
+                        {selected[0].freezerName} › {selected[0].name}
+                    </span>
+                ) : selected.length > 1 ? (
+                    <span>
+                        Réparti dans {selected.length} tiroirs — touche un
+                        tiroir pour l’ajouter ou le retirer
                     </span>
                 ) : (
                     <span>
                         {error ??
-                            'Touche un tiroir pour choisir où ranger ton batch'}
+                            'Touche un ou plusieurs tiroirs pour ranger ton batch'}
                     </span>
                 )}
             </motion.div>

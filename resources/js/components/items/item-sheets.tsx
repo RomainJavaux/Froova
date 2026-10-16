@@ -32,15 +32,101 @@ type SheetProps = {
     onOpenChange: (open: boolean) => void;
 };
 
-export function RestockSheet({ item, open, onOpenChange }: SheetProps) {
+/**
+ * Every drawer of the household, grouped by freezer; the drawers holding this batch show its share.
+ */
+function CompartmentGrid({
+    item,
+    freezers,
+    value,
+    onChange,
+    disabledId = null,
+}: {
+    item: Item;
+    freezers: FreezerOption[];
+    value: number | null;
+    onChange: (compartmentId: number) => void;
+    disabledId?: number | null;
+}) {
+    const catalog = useCatalog();
+
+    return (
+        <div className="space-y-5">
+            {freezers.map((freezer) => (
+                <div key={freezer.id}>
+                    <p className="mb-2 flex items-center gap-2 text-sm font-bold">
+                        <span
+                            className="size-3 rounded-full"
+                            style={{
+                                background: gradient(
+                                    findColor(catalog, freezer.color),
+                                ),
+                            }}
+                        />
+                        {freezer.name}
+                    </p>
+                    <div className="grid grid-cols-2 gap-2">
+                        {freezer.compartments.map((compartment) => {
+                            const active = value === compartment.id;
+                            const here = item.locations.find(
+                                (location) =>
+                                    location.compartmentId === compartment.id,
+                            );
+
+                            return (
+                                <motion.button
+                                    key={compartment.id}
+                                    type="button"
+                                    whileTap={{ scale: 0.96 }}
+                                    disabled={disabledId === compartment.id}
+                                    onClick={() => onChange(compartment.id)}
+                                    className={cn(
+                                        'relative flex items-center gap-2 rounded-2xl border p-3 text-left text-sm font-semibold transition disabled:opacity-40',
+                                        active
+                                            ? 'border-primary bg-primary/10 text-primary'
+                                            : 'border-border hover:bg-accent',
+                                    )}
+                                >
+                                    <span className="grid size-7 shrink-0 place-items-center rounded-lg bg-muted text-xs">
+                                        {compartment.position}
+                                    </span>
+                                    <span className="min-w-0 flex-1 truncate">
+                                        {compartment.name}
+                                    </span>
+                                    {here && (
+                                        <span className="rounded-full bg-muted px-1.5 text-[11px] text-muted-foreground tabular-nums">
+                                            ×{here.quantity}
+                                        </span>
+                                    )}
+                                    {active && !here && (
+                                        <Check className="size-4" />
+                                    )}
+                                </motion.button>
+                            );
+                        })}
+                    </div>
+                </div>
+            ))}
+        </div>
+    );
+}
+
+export function RestockSheet({
+    item,
+    open,
+    onOpenChange,
+    freezers,
+}: SheetProps & { freezers: FreezerOption[] }) {
     const catalog = useCatalog();
     const [quantity, setQuantity] = useState(1);
+    const [target, setTarget] = useState<number | null>(null);
     const [processing, setProcessing] = useState(false);
+    const destination = target ?? item.compartmentId;
 
     const submit = () =>
         router.post(
             itemsRoutes.restock.url(item.id),
-            { quantity },
+            { quantity, compartment_id: destination },
             {
                 preserveScroll: true,
                 onStart: () => setProcessing(true),
@@ -48,6 +134,7 @@ export function RestockSheet({ item, open, onOpenChange }: SheetProps) {
                 onSuccess: () => {
                     onOpenChange(false);
                     setQuantity(1);
+                    setTarget(null);
                 },
             },
         );
@@ -57,12 +144,12 @@ export function RestockSheet({ item, open, onOpenChange }: SheetProps) {
             open={open}
             onOpenChange={onOpenChange}
             title="Rajouter au même batch"
-            description="Tu as refait la même chose ? Ajoute les portions à ce lot."
+            description="Tu as refait la même chose ? Ajoute les portions à ce lot, dans le tiroir de ton choix."
             footer={
                 <Button
                     size="lg"
                     className="w-full"
-                    disabled={processing}
+                    disabled={processing || destination === null}
                     onClick={submit}
                 >
                     {processing ? (
@@ -83,9 +170,18 @@ export function RestockSheet({ item, open, onOpenChange }: SheetProps) {
                 suffix={unitWord(catalog, item.unit, quantity)}
                 className="py-4"
             />
+            <p className="mt-2 mb-3 text-sm font-semibold">Où les ranger ?</p>
+            <CompartmentGrid
+                item={item}
+                freezers={freezers}
+                value={destination}
+                onChange={setTarget}
+            />
         </BottomSheet>
     );
 }
+
+type MoveSource = number | 'unplaced';
 
 export function MoveSheet({
     item,
@@ -94,22 +190,55 @@ export function MoveSheet({
     freezers,
 }: SheetProps & { freezers: FreezerOption[] }) {
     const catalog = useCatalog();
-    const [target, setTarget] = useState<number | null>(item.compartmentId);
+    const sources: { key: MoveSource; label: string; quantity: number }[] = [
+        ...item.locations.map((location) => ({
+            key: location.compartmentId as MoveSource,
+            label: location.compartmentName,
+            quantity: location.quantity,
+        })),
+        ...(item.unplacedQuantity > 0
+            ? [
+                  {
+                      key: 'unplaced' as MoveSource,
+                      label: 'À ranger',
+                      quantity: item.unplacedQuantity,
+                  },
+              ]
+            : []),
+    ];
+    const [sourceKey, setSourceKey] = useState<MoveSource | null>(null);
+    const [quantity, setQuantity] = useState<number | null>(null);
+    const [target, setTarget] = useState<number | null>(null);
     const [processing, setProcessing] = useState(false);
+    const source =
+        sources.find((candidate) => candidate.key === sourceKey) ?? sources[0];
+    const available = source?.quantity ?? 1;
+    const amount = Math.min(quantity ?? available, available);
 
     const submit = () => {
-        if (!target) {
+        if (!target || !source) {
             return;
         }
 
         router.post(
             itemsRoutes.move.url(item.id),
-            { compartment_id: target },
+            {
+                compartment_id: target,
+                from_compartment_id:
+                    source.key === 'unplaced' ? null : source.key,
+                from_unplaced: source.key === 'unplaced',
+                quantity: amount,
+            },
             {
                 preserveScroll: true,
                 onStart: () => setProcessing(true),
                 onFinish: () => setProcessing(false),
-                onSuccess: () => onOpenChange(false),
+                onSuccess: () => {
+                    onOpenChange(false);
+                    setTarget(null);
+                    setQuantity(null);
+                    setSourceKey(null);
+                },
             },
         );
     };
@@ -125,7 +254,10 @@ export function MoveSheet({
                     size="lg"
                     className="w-full"
                     disabled={
-                        processing || !target || target === item.compartmentId
+                        processing ||
+                        !target ||
+                        !source ||
+                        target === source.key
                     }
                     onClick={submit}
                 >
@@ -134,65 +266,60 @@ export function MoveSheet({
                     ) : (
                         <ArrowRightLeft className="size-5" />
                     )}{' '}
-                    Déplacer ici
+                    Déplacer {formatQuantity(catalog, item.unit, amount)}
                 </Button>
             }
         >
             <div className="space-y-5">
-                {freezers.map((freezer) => (
-                    <div key={freezer.id}>
-                        <p className="mb-2 flex items-center gap-2 text-sm font-bold">
-                            <span
-                                className="size-3 rounded-full"
-                                style={{
-                                    background: gradient(
-                                        findColor(catalog, freezer.color),
-                                    ),
-                                }}
-                            />
-                            {freezer.name}
-                        </p>
-                        <div className="grid grid-cols-2 gap-2">
-                            {freezer.compartments.map((compartment) => {
-                                const active = target === compartment.id;
-                                const current =
-                                    item.compartmentId === compartment.id;
-
-                                return (
-                                    <motion.button
-                                        key={compartment.id}
-                                        type="button"
-                                        whileTap={{ scale: 0.96 }}
-                                        onClick={() =>
-                                            setTarget(compartment.id)
-                                        }
-                                        className={cn(
-                                            'relative flex items-center gap-2 rounded-2xl border p-3 text-left text-sm font-semibold transition',
-                                            active
-                                                ? 'border-primary bg-primary/10 text-primary'
-                                                : 'border-border hover:bg-accent',
-                                        )}
-                                    >
-                                        <span className="grid size-7 shrink-0 place-items-center rounded-lg bg-muted text-xs">
-                                            {compartment.position}
-                                        </span>
-                                        <span className="min-w-0 flex-1 truncate">
-                                            {compartment.name}
-                                        </span>
-                                        {current && (
-                                            <span className="text-[10px] text-muted-foreground">
-                                                actuel
-                                            </span>
-                                        )}
-                                        {active && !current && (
-                                            <Check className="size-4" />
-                                        )}
-                                    </motion.button>
-                                );
-                            })}
+                {sources.length > 1 && (
+                    <div>
+                        <p className="mb-2 text-sm font-semibold">Depuis</p>
+                        <div className="flex flex-wrap gap-2">
+                            {sources.map((candidate) => (
+                                <Chip
+                                    key={candidate.key}
+                                    active={candidate.key === source?.key}
+                                    className="h-9"
+                                    onClick={() => {
+                                        setSourceKey(candidate.key);
+                                        setQuantity(null);
+                                    }}
+                                >
+                                    {candidate.label}
+                                    <span className="rounded-full bg-black/10 px-1.5 text-[11px] tabular-nums dark:bg-white/15">
+                                        {candidate.quantity}
+                                    </span>
+                                </Chip>
+                            ))}
                         </div>
                     </div>
-                ))}
+                )}
+
+                {available > 1 && (
+                    <div>
+                        <p className="mb-1 text-sm font-semibold">Combien ?</p>
+                        <Stepper
+                            value={amount}
+                            onChange={setQuantity}
+                            min={1}
+                            max={available}
+                            suffix={unitWord(catalog, item.unit, amount)}
+                        />
+                    </div>
+                )}
+
+                <div>
+                    <p className="mb-2 text-sm font-semibold">Vers</p>
+                    <CompartmentGrid
+                        item={item}
+                        freezers={freezers}
+                        value={target}
+                        onChange={setTarget}
+                        disabledId={
+                            typeof source?.key === 'number' ? source.key : null
+                        }
+                    />
+                </div>
             </div>
         </BottomSheet>
     );

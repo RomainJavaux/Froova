@@ -38,14 +38,14 @@ class DashboardController extends Controller
         ];
 
         $priority = (clone $inStock)
-            ->with('compartment.freezer')
+            ->with('placements.compartment.freezer')
             ->whereNotNull('best_before')
             ->orderBy('best_before')
             ->limit(10)
             ->get();
 
         $suggestions = (clone $inStock)
-            ->with('compartment.freezer')
+            ->with('placements.compartment.freezer')
             ->whereIn('category', array_map(fn (ItemCategory $category) => $category->value, self::MEAL_CATEGORIES))
             ->orderBy('best_before')
             ->limit(30)
@@ -53,8 +53,8 @@ class DashboardController extends Controller
 
         $freezers = $household->freezers()
             ->with(['compartments' => fn ($query) => $query
-                ->withCount(['items' => fn ($items) => $items->inStock()])
-                ->withSum(['items' => fn ($items) => $items->inStock()], 'quantity')])
+                ->withCount('placements')
+                ->withSum('placements', 'quantity')])
             ->get();
 
         $categories = (clone $inStock)
