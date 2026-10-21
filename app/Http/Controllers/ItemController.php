@@ -128,6 +128,19 @@ class ItemController extends Controller
         ]);
     }
 
+    /**
+     * Printable label sized for a label printer (90×38 mm detailed, or 29×29 mm QR code).
+     */
+    public function label(Request $request, Item $item): Response
+    {
+        Gate::authorize('view', $item);
+
+        return Inertia::render('items/label', [
+            'item' => ItemResource::make($item)->resolve($request),
+            'format' => $request->query('format') === 'square' ? 'square' : 'detailed',
+        ]);
+    }
+
     public function edit(Request $request, Item $item): Response
     {
         Gate::authorize('update', $item);

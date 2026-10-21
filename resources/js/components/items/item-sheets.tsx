@@ -7,8 +7,13 @@ import {
     Trash2,
 } from 'lucide-react';
 import { motion } from 'motion/react';
-import QRCode from 'qrcode';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
+import {
+    ItemLabel,
+    LABEL_FORMATS,
+    useItemQr,
+} from '@/components/items/print-label';
+import type { LabelFormat } from '@/components/items/print-label';
 import { BottomSheet } from '@/components/ui/bottom-sheet';
 import { Button } from '@/components/ui/button';
 import { Chip } from '@/components/ui/chip';
@@ -21,7 +26,6 @@ import {
     unitWord,
     useCatalog,
 } from '@/lib/catalog';
-import { formatDate } from '@/lib/dates';
 import { cn } from '@/lib/utils';
 import itemsRoutes from '@/routes/items';
 import type { FreezerOption, Item } from '@/types';
@@ -395,89 +399,64 @@ export function DiscardSheet({ item, open, onOpenChange }: SheetProps) {
 }
 
 /**
- * Printable label with a QR code that opens the item, to stick on the container.
+ * Pick a label model, preview it at real size and open the print page.
  */
 export function LabelSheet({ item, open, onOpenChange }: SheetProps) {
-    const catalog = useCatalog();
-    const [qr, setQr] = useState<string | null>(null);
-
-    useEffect(() => {
-        if (!open) {
-            return;
-        }
-
-        const url = `${window.location.origin}${itemsRoutes.show.url(item.id)}`;
-
-        void QRCode.toDataURL(url, {
-            margin: 0,
-            width: 360,
-            color: { dark: '#0f172a', light: '#ffffff' },
-        }).then(setQr);
-    }, [open, item.id]);
+    const [format, setFormat] = useState<LabelFormat>('detailed');
+    const qr = useItemQr(item);
+    const { width, height } = LABEL_FORMATS[format];
 
     return (
         <BottomSheet
             open={open}
             onOpenChange={onOpenChange}
             title="Étiquette"
-            description="Imprime-la ou montre-la : le QR code ouvre directement ce batch."
+            description="Le QR code ouvre directement ce batch."
             footer={
                 <Button
                     size="lg"
                     className="w-full"
-                    onClick={() => window.print()}
+                    onClick={() =>
+                        window.open(
+                            itemsRoutes.label.url(item.id, {
+                                query: { format },
+                            }),
+                            '_blank',
+                        )
+                    }
                 >
-                    <Printer className="size-5" /> Imprimer
+                    <Printer className="size-5" /> Imprimer {width} × {height}{' '}
+                    mm
                 </Button>
             }
         >
-            <div className="print-area mx-auto w-full max-w-[340px] rounded-3xl border-2 border-dashed border-slate-300 bg-white p-5 text-slate-900">
-                <div className="flex items-start gap-4">
-                    <div className="min-w-0 flex-1">
-                        <div className="text-4xl">{item.displayEmoji}</div>
-                        <div className="mt-1 font-display text-xl leading-tight font-extrabold">
-                            {item.name}
-                        </div>
-                        <div className="mt-2 space-y-0.5 text-[13px]">
-                            <div>
-                                <span className="text-slate-500">
-                                    Congelé :
-                                </span>{' '}
-                                <strong>{formatDate(item.frozenOn)}</strong>
-                            </div>
-                            <div>
-                                <span className="text-slate-500">
-                                    À manger avant :
-                                </span>{' '}
-                                <strong>{formatDate(item.bestBefore)}</strong>
-                            </div>
-                            <div>
-                                <span className="text-slate-500">Lot :</span>{' '}
-                                <strong>
-                                    {formatQuantity(
-                                        catalog,
-                                        item.unit,
-                                        item.initialQuantity,
-                                    )}
-                                </strong>
-                                {item.servings
-                                    ? ` · ${item.servings} pers.`
-                                    : ''}
-                            </div>
-                        </div>
-                    </div>
-                    <div className="grid size-28 shrink-0 place-items-center">
-                        {qr ? (
-                            <img src={qr} alt="QR code" className="size-28" />
-                        ) : (
-                            <Spinner />
-                        )}
-                    </div>
-                </div>
-                <div className="mt-3 flex items-center gap-1.5 border-t border-slate-200 pt-2 text-[11px] font-semibold text-slate-500">
-                    ❄ froova
-                </div>
+            <div className="flex justify-center gap-2">
+                {(Object.keys(LABEL_FORMATS) as LabelFormat[]).map((key) => (
+                    <Chip
+                        key={key}
+                        active={key === format}
+                        className="h-9"
+                        onClick={() => setFormat(key)}
+                    >
+                        {LABEL_FORMATS[key].name}
+                        <span className="text-[11px] tabular-nums opacity-70">
+                            {LABEL_FORMATS[key].width}×
+                            {LABEL_FORMATS[key].height}
+                        </span>
+                    </Chip>
+                ))}
             </div>
+            <div className="mt-5 grid min-h-40 place-items-center overflow-hidden rounded-3xl bg-slate-200 p-4 dark:bg-slate-800">
+                <ItemLabel
+                    item={item}
+                    format={format}
+                    qr={qr}
+                    className="origin-center shadow-md"
+                />
+            </div>
+            <p className="mt-2 text-center text-xs text-muted-foreground">
+                Aperçu à taille réelle
+            </p>
         </BottomSheet>
     );
 }

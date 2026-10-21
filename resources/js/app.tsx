@@ -14,7 +14,12 @@ const appName = import.meta.env.VITE_APP_NAME || 'Froova';
 /**
  * Pages that draw their own full-screen layout.
  */
-const STANDALONE_PAGES = ['welcome', 'onboarding', 'invitations/show'];
+const STANDALONE_PAGES = [
+    'welcome',
+    'onboarding',
+    'invitations/show',
+    'items/label',
+];
 
 void createInertiaApp({
     title: (title) => (title ? `${title} · ${appName}` : appName),

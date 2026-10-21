@@ -36,6 +36,7 @@ Route::middleware('auth')->group(function () {
         Route::resource('freezers', FreezerController::class);
 
         Route::resource('items', ItemController::class);
+        Route::get('items/{item}/label', [ItemController::class, 'label'])->name('items.label');
         Route::post('items/{item}/take', [ItemStockController::class, 'take'])->name('items.take');
         Route::post('items/{item}/restock', [ItemStockController::class, 'restock'])->name('items.restock');
         Route::post('items/{item}/move', [ItemStockController::class, 'move'])->name('items.move');

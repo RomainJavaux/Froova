@@ -339,22 +339,6 @@
     body {
         background: white !important;
     }
-
-    body:has(.print-area) * {
-        visibility: hidden;
-    }
-
-    body:has(.print-area) .print-area,
-    body:has(.print-area) .print-area * {
-        visibility: visible;
-    }
-
-    body:has(.print-area) .print-area {
-        position: fixed;
-        top: 0;
-        left: 0;
-        border-style: solid;
-    }
 }
 
 @media (prefers-reduced-motion: reduce) {
