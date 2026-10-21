@@ -1,6 +1,6 @@
 import QRCode from 'qrcode';
-import { useEffect, useState } from 'react';
-import { findCategory, formatQuantity, useCatalog } from '@/lib/catalog';
+import { useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { formatQuantity, useCatalog } from '@/lib/catalog';
 import { formatDate } from '@/lib/dates';
 import { cn } from '@/lib/utils';
 import itemsRoutes from '@/routes/items';
@@ -84,7 +84,6 @@ export function ItemLabel({
         );
     }
 
-    const category = findCategory(catalog, item.category);
     const details = [
         formatQuantity(catalog, item.unit, item.initialQuantity),
         item.servings ? `${item.servings} pers.` : null,
@@ -109,20 +108,9 @@ export function ItemLabel({
             </div>
 
             <div className="flex min-w-0 flex-1 flex-col">
-                <div
-                    className="line-clamp-2 leading-[1.1] font-extrabold"
-                    style={{ fontSize: '12.5pt' }}
-                >
-                    {item.name}
-                </div>
-                <div
-                    className="mt-[0.6mm] truncate font-semibold uppercase"
-                    style={{ fontSize: '6.5pt', letterSpacing: '0.04em' }}
-                >
-                    {category?.label}
-                </div>
+                <FittedTitle text={item.name} />
 
-                <div className="mt-auto border-t-[0.4mm] border-black pt-[1.2mm]">
+                <div className="mt-[1.2mm] shrink-0 border-t-[0.4mm] border-black pt-[1.2mm]">
                     <div
                         className="font-bold uppercase"
                         style={{ fontSize: '6.5pt', letterSpacing: '0.04em' }}
@@ -147,6 +135,81 @@ export function ItemLabel({
                         <div className="truncate">{details.join(' · ')}</div>
                     </div>
                 </div>
+            </div>
+        </div>
+    );
+}
+
+const TITLE_MIN_PT = 8;
+const TITLE_MAX_PT = 34;
+
+/**
+ * Dish name set as large as the free space allows: short names get huge,
+ * long ones wrap and shrink until they fit, never cutting a word.
+ */
+function FittedTitle({ text }: { text: string }) {
+    const box = useRef<HTMLDivElement>(null);
+    const title = useRef<HTMLDivElement>(null);
+
+    useLayoutEffect(() => {
+        const container = box.current;
+        const element = title.current;
+
+        if (!container || !element) {
+            return;
+        }
+
+        const fit = () => {
+            if (container.clientHeight === 0) {
+                return;
+            }
+
+            const fits = (size: number) => {
+                element.style.fontSize = `${size}pt`;
+
+                return (
+                    element.scrollHeight <= container.clientHeight &&
+                    element.scrollWidth <= container.clientWidth
+                );
+            };
+
+            let low = TITLE_MIN_PT;
+            let high = TITLE_MAX_PT;
+
+            // Half-point precision is plenty on a 300 dpi label.
+            while (high - low > 0.5) {
+                const middle = (low + high) / 2;
+
+                if (fits(middle)) {
+                    low = middle;
+                } else {
+                    high = middle;
+                }
+            }
+
+            element.style.fontSize = `${low}pt`;
+        };
+
+        fit();
+        void document.fonts?.ready.then(fit);
+
+        const observer = new ResizeObserver(fit);
+        observer.observe(container);
+
+        return () => observer.disconnect();
+    }, [text]);
+
+    return (
+        <div
+            ref={box}
+            className="flex min-h-0 flex-1 items-center overflow-hidden"
+        >
+            <div
+                ref={title}
+                className="w-full leading-[1.05] font-extrabold tracking-tight break-normal hyphens-none"
+                style={{ fontSize: `${TITLE_MIN_PT}pt` }}
+            >
+                {text}
             </div>
         </div>
     );

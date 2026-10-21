@@ -30,8 +30,10 @@ export default function ItemLabelPage({
     useEffect(() => {
         if (qr && !printed.current) {
             printed.current = true;
-            // Let the browser paint the QR code before opening the dialog.
-            window.setTimeout(() => window.print(), 150);
+            // Fonts must be in to size the title; then let the browser paint.
+            void document.fonts.ready.then(() =>
+                window.setTimeout(() => window.print(), 150),
+            );
         }
     }, [qr]);
 
