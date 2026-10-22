@@ -72,6 +72,7 @@ export function ItemLabel({
     if (format === 'square') {
         return (
             <div
+                data-format="square"
                 className={cn('item-label bg-white', className)}
                 style={{
                     width: `${width}mm`,
@@ -92,6 +93,7 @@ export function ItemLabel({
 
     return (
         <div
+            data-format="detailed"
             className={cn(
                 'item-label flex bg-white font-sans text-black',
                 className,

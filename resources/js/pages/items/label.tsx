@@ -43,9 +43,22 @@ export default function ItemLabelPage({
             <style>{`
                 @page { size: ${width}mm ${height}mm; margin: 0; }
                 @media print {
-                    html, body { margin: 0 !important; padding: 0 !important; background: #fff !important; }
-                    .label-page { display: block !important; min-height: 0 !important; padding: 0 !important; background: #fff !important; }
-                    .item-label { break-inside: avoid; }
+                    /* Exactly one page, whatever paper the driver really uses. */
+                    html, body, #app, .label-page {
+                        margin: 0 !important; padding: 0 !important; background: #fff !important;
+                        width: 100vw !important; height: 100vh !important; min-height: 0 !important; overflow: hidden !important;
+                    }
+                    .label-page { display: block !important; }
+                    .label-page > :not(.item-label), [data-sonner-toaster] { display: none !important; }
+                    .item-label { box-shadow: none !important; }
+                    /* The QR code fills the page and stays centred, even on a mismatched paper size. */
+                    .item-label[data-format="square"] {
+                        width: 100vw !important; height: 100vh !important; padding: 0 !important;
+                        display: grid !important; place-items: center;
+                    }
+                    .item-label[data-format="square"] > * {
+                        width: calc(min(100vw, 100vh) - 4mm) !important; height: calc(min(100vw, 100vh) - 4mm) !important;
+                    }
                 }
             `}</style>
 
