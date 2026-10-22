@@ -57,7 +57,7 @@ export default function ItemLabelPage({
                         display: grid !important; place-items: center;
                     }
                     .item-label[data-format="square"] > * {
-                        width: calc(min(100vw, 100vh) - 4mm) !important; height: calc(min(100vw, 100vh) - 4mm) !important;
+                        width: calc(min(100vw, 100vh) - 8mm) !important; height: calc(min(100vw, 100vh) - 8mm) !important;
                     }
                 }
             `}</style>

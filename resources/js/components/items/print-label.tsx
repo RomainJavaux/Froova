@@ -77,7 +77,7 @@ export function ItemLabel({
                 style={{
                     width: `${width}mm`,
                     height: `${height}mm`,
-                    padding: '2mm',
+                    padding: '4mm',
                 }}
             >
                 {code}
