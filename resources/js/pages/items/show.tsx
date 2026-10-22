@@ -33,6 +33,7 @@ import {
     QuantityBar,
     freshnessColor,
 } from '@/components/items/item-visuals';
+import { PhotoHero } from '@/components/items/photo-hero';
 import { TakeSheet } from '@/components/items/take-sheet';
 import { PageHeader } from '@/components/page-header';
 import { BottomSheet } from '@/components/ui/bottom-sheet';
@@ -83,6 +84,26 @@ export default function ItemShow({
     );
 
     const close = (open: boolean) => !open && setSheet(null);
+
+    const heroOverlay = (
+        <div className="pointer-events-none absolute inset-x-0 bottom-0 flex items-end justify-between gap-3 bg-gradient-to-t from-black/55 to-transparent p-5 pt-16 text-white">
+            <span className="rounded-full bg-white/90 shadow-sm backdrop-blur dark:bg-slate-900/85">
+                <FreshnessBadge freshness={item.freshness} />
+            </span>
+            {item.tags.length > 0 && (
+                <div className="flex flex-wrap justify-end gap-1">
+                    {item.tags.map((tag) => (
+                        <span
+                            key={tag}
+                            className="rounded-full bg-white/20 px-2.5 py-0.5 text-xs font-semibold backdrop-blur"
+                        >
+                            #{tag}
+                        </span>
+                    ))}
+                </div>
+            )}
+        </div>
+    );
 
     return (
         <>
@@ -161,28 +182,20 @@ export default function ItemShow({
                         animate={{ opacity: 1, scale: 1 }}
                         className="relative overflow-hidden rounded-[32px] shadow-[var(--shadow-float)]"
                     >
-                        <ItemAvatar
-                            item={item}
-                            size="xl"
-                            className="aspect-[16/10] h-auto w-full rounded-none text-[110px] sm:aspect-[16/8]"
-                        />
-                        <div className="absolute inset-x-0 bottom-0 flex items-end justify-between gap-3 bg-gradient-to-t from-black/55 to-transparent p-5 pt-16 text-white">
-                            <span className="rounded-full bg-white/90 shadow-sm backdrop-blur dark:bg-slate-900/85">
-                                <FreshnessBadge freshness={item.freshness} />
-                            </span>
-                            {item.tags.length > 0 && (
-                                <div className="flex flex-wrap justify-end gap-1">
-                                    {item.tags.map((tag) => (
-                                        <span
-                                            key={tag}
-                                            className="rounded-full bg-white/20 px-2.5 py-0.5 text-xs font-semibold backdrop-blur"
-                                        >
-                                            #{tag}
-                                        </span>
-                                    ))}
-                                </div>
-                            )}
-                        </div>
+                        {item.photoUrl ? (
+                            <PhotoHero src={item.photoUrl} alt={item.name}>
+                                {heroOverlay}
+                            </PhotoHero>
+                        ) : (
+                            <>
+                                <ItemAvatar
+                                    item={item}
+                                    size="xl"
+                                    className="aspect-[16/10] h-auto w-full rounded-none text-[110px] sm:aspect-[16/8]"
+                                />
+                                {heroOverlay}
+                            </>
+                        )}
                     </motion.div>
 
                     {!finished && (
