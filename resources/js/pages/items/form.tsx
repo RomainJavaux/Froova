@@ -15,6 +15,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { StepLabel } from '@/components/freezer/freezer-configurator';
 import InputError from '@/components/input-error';
 import { PlacementEditor } from '@/components/items/placement-editor';
+import { PreparationFields } from '@/components/items/preparation-fields';
 import { PageHeader } from '@/components/page-header';
 import { BottomSheet } from '@/components/ui/bottom-sheet';
 import { Button } from '@/components/ui/button';
@@ -33,12 +34,18 @@ import { addMonthsIso, durationLabel, formatDate, todayIso } from '@/lib/dates';
 import { useIsDesktop } from '@/hooks/use-media-query';
 import { compressImage } from '@/lib/image';
 import { totalOf, withTotal } from '@/lib/placements';
+import {
+    hasPreparation,
+    preparationDraft,
+    usesTemperature,
+} from '@/lib/preparation';
+import type { Preparation, PreparationDraft } from '@/lib/preparation';
 import type { PlacementDraft } from '@/lib/placements';
 import { cn } from '@/lib/utils';
 import itemsRoutes from '@/routes/items';
 import type { FreezerOption, Item } from '@/types';
 
-type Suggestion = {
+type Suggestion = Preparation & {
     id: number;
     name: string;
     emoji: string;
@@ -72,7 +79,7 @@ type FormData = {
     best_before: string;
     tags: string[];
     placements: PlacementDraft[];
-};
+} & PreparationDraft;
 
 const QUICK_QUANTITIES = [1, 2, 4, 6, 8, 10, 12];
 
@@ -105,6 +112,7 @@ export default function ItemForm({
         frozen_on: item?.frozenOn ?? today,
         best_before: item?.bestBefore ?? '',
         tags: base?.tags ?? [],
+        ...preparationDraft(base),
         placements: item
             ? item.locations.map((location, index) => ({
                   compartment_id: location.compartmentId,
@@ -176,6 +184,8 @@ export default function ItemForm({
             category: suggestion.category,
             unit: suggestion.unit,
             servings: suggestion.servings,
+            // A dish made before brings back how to eat it.
+            ...(hasPreparation(suggestion) ? preparationDraft(suggestion) : {}),
         }));
     };
 
@@ -224,6 +234,13 @@ export default function ItemForm({
             ...data,
             best_before: bestBefore,
             weight_grams: data.weight_grams || null,
+            reheat_minutes:
+                data.reheat_method === 'cold'
+                    ? null
+                    : data.reheat_minutes || null,
+            reheat_temperature: usesTemperature(catalog, data.reheat_method)
+                ? data.reheat_temperature || null
+                : null,
             ...(editing ? { _method: 'put' } : {}),
         }));
 
@@ -762,9 +779,24 @@ export default function ItemForm({
                         </div>
                     </section>
 
+                    {/* How to eat it */}
+                    <section>
+                        <StepLabel
+                            step={5}
+                            title="Pour le manger (facultatif)"
+                        />
+                        <PreparationFields
+                            value={form.data}
+                            onChange={(patch) =>
+                                form.setData((data) => ({ ...data, ...patch }))
+                            }
+                            errors={form.errors}
+                        />
+                    </section>
+
                     {/* Details */}
                     <section>
-                        <StepLabel step={5} title="Détails (facultatif)" />
+                        <StepLabel step={6} title="Détails (facultatif)" />
                         <div className="surface space-y-4 p-5">
                             <Textarea
                                 value={form.data.description}
@@ -774,7 +806,7 @@ export default function ItemForm({
                                         event.target.value,
                                     )
                                 }
-                                placeholder="Recette, astuces de réchauffage, allergènes…"
+                                placeholder="Recette, allergènes, astuces…"
                                 rows={3}
                             />
                             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">

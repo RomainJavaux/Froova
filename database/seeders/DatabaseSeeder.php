@@ -102,6 +102,7 @@ class DatabaseSeeder extends Seeder
                 'best_before' => $frozenOn->addMonthsNoOverflow($category->shelfLifeMonths()),
                 'description' => $description,
                 'tags' => $tags,
+                ...(self::PREPARATIONS[$name] ?? []),
             ]);
 
             // The big lasagne batch is split between the kitchen freezer and the garage chest.
@@ -116,4 +117,25 @@ class DatabaseSeeder extends Seeder
         $inventory->take($lasagnes, $partner, 2, $k[0]->id);
         $inventory->take(Item::query()->where('name', 'Croissants')->firstOrFail(), $user, 4);
     }
+
+    /**
+     * How to eat a few of the demo dishes.
+     */
+    private const PREPARATIONS = [
+        'Lasagnes bolognaise' => [
+            'thaw' => 'fridge',
+            'reheat_method' => 'oven',
+            'reheat_temperature' => 180,
+            'reheat_minutes' => 25,
+            'extras' => ['Parmesan', 'Salade verte'],
+            'reheat_notes' => 'Couvrir de papier alu les 15 premières minutes, puis gratiner à découvert.',
+        ],
+        'Curry de pois chiches' => [
+            'thaw' => 'frozen',
+            'reheat_method' => 'pot',
+            'reheat_minutes' => 12,
+            'extras' => ['Riz basmati', 'Coriandre fraîche'],
+            'reheat_notes' => 'Ajouter un filet d’eau et remuer de temps en temps.',
+        ],
+    ];
 }

@@ -35,6 +35,13 @@ export type Item = {
     frozenOn: string;
     bestBefore: string | null;
     tags: string[];
+    /** How to eat it: thawing, reheating, what to add. */
+    thaw: string | null;
+    reheatMethod: string | null;
+    reheatMinutes: number | null;
+    reheatTemperature: number | null;
+    extras: string[];
+    reheatNotes: string | null;
     finishedAt: string | null;
     createdAt: string | null;
     freshness: Freshness;
@@ -150,6 +157,17 @@ export type FreezerTypeOption = {
     maxCompartments: number;
 };
 
+export type ThawMethodOption = {
+    value: string;
+    label: string;
+};
+
+export type ReheatMethodOption = {
+    value: string;
+    label: string;
+    usesTemperature: boolean;
+};
+
 export type PaletteColor = {
     value: string;
     label: string;
@@ -160,6 +178,8 @@ export type PaletteColor = {
 export type Catalog = {
     categories: CategoryOption[];
     units: UnitOption[];
+    thawMethods: ThawMethodOption[];
+    reheatMethods: ReheatMethodOption[];
     freezerTypes: FreezerTypeOption[];
     roles: { value: HouseholdRole; label: string }[];
     palette: PaletteColor[];

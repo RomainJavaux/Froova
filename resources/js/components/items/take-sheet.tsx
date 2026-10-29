@@ -3,6 +3,7 @@ import { HandPlatter, MapPin } from 'lucide-react';
 import { motion } from 'motion/react';
 import { useState } from 'react';
 import { ItemAvatar } from '@/components/items/item-visuals';
+import { PreparationReminder } from '@/components/items/preparation-card';
 import { BottomSheet } from '@/components/ui/bottom-sheet';
 import { Button } from '@/components/ui/button';
 import { Chip } from '@/components/ui/chip';
@@ -222,6 +223,8 @@ export function TakeSheet({
                         </>
                     )}
                 </p>
+
+                <PreparationReminder item={item} />
             </div>
         </BottomSheet>
     );

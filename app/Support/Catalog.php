@@ -6,6 +6,8 @@ use App\Enums\FreezerType;
 use App\Enums\HouseholdRole;
 use App\Enums\ItemCategory;
 use App\Enums\ItemUnit;
+use App\Enums\ReheatMethod;
+use App\Enums\ThawMethod;
 
 /**
  * Static reference data shared once with the frontend.
@@ -31,6 +33,17 @@ final class Catalog
                 'singular' => $unit->singular(),
                 'plural' => $unit->plural(),
             ], ItemUnit::cases()),
+
+            'thawMethods' => array_map(fn (ThawMethod $method) => [
+                'value' => $method->value,
+                'label' => $method->label(),
+            ], ThawMethod::cases()),
+
+            'reheatMethods' => array_map(fn (ReheatMethod $method) => [
+                'value' => $method->value,
+                'label' => $method->label(),
+                'usesTemperature' => $method->usesTemperature(),
+            ], ReheatMethod::cases()),
 
             'freezerTypes' => array_map(fn (FreezerType $type) => [
                 'value' => $type->value,

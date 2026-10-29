@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Enums\ItemCategory;
+use App\Enums\ReheatMethod;
 use App\Http\Requests\Items\ItemRequest;
 use App\Http\Resources\ItemResource;
 use App\Http\Resources\MovementResource;
@@ -81,6 +82,7 @@ class ItemController extends Controller
             'household_id' => $household->id,
             'best_before' => $data['best_before'] ?? $this->defaultBestBefore($data),
             'tags' => $this->cleanTags($data['tags'] ?? []),
+            ...$this->preparation($data),
         ]);
 
         if ($request->hasFile('photo')) {
@@ -166,6 +168,7 @@ class ItemController extends Controller
             ...Arr::except($data, ['photo', 'remove_photo', 'placements']),
             'best_before' => $data['best_before'] ?? $this->defaultBestBefore($data),
             'tags' => $this->cleanTags($data['tags'] ?? []),
+            ...$this->preparation($data),
         ]);
 
         if ($request->hasFile('photo')) {
@@ -232,7 +235,7 @@ class ItemController extends Controller
         return array_values($household->items()
             ->latest('id')
             ->limit(200)
-            ->get(['id', 'name', 'emoji', 'category', 'unit', 'servings'])
+            ->get(['id', 'name', 'emoji', 'category', 'unit', 'servings', 'thaw', 'reheat_method', 'reheat_minutes', 'reheat_temperature', 'extras', 'reheat_notes'])
             ->unique(fn (Item $item) => Str::lower($item->name))
             ->take(40)
             ->map(fn (Item $item) => [
@@ -242,6 +245,7 @@ class ItemController extends Controller
                 'category' => $item->category->value,
                 'unit' => $item->unit->value,
                 'servings' => $item->servings,
+                ...ItemResource::preparation($item),
             ])
             ->all());
     }
@@ -267,6 +271,44 @@ class ItemController extends Controller
             ->filter()
             ->unique()
             ->all());
+    }
+
+    /**
+     * Every preparation field is written, so leaving one empty clears it.
+     *
+     * @param  array<string, mixed>  $data
+     * @return array<string, mixed>
+     */
+    private function preparation(array $data): array
+    {
+        $method = isset($data['reheat_method']) ? ReheatMethod::from((string) $data['reheat_method']) : null;
+
+        return [
+            'thaw' => $data['thaw'] ?? null,
+            'reheat_method' => $method,
+            // Cold dishes have no reheating time; only the oven and the air fryer need a temperature.
+            'reheat_minutes' => $method === ReheatMethod::Cold ? null : ($data['reheat_minutes'] ?? null),
+            'reheat_temperature' => $method?->usesTemperature() ? ($data['reheat_temperature'] ?? null) : null,
+            'extras' => $this->cleanExtras((array) ($data['extras'] ?? [])),
+            'reheat_notes' => $data['reheat_notes'] ?? null,
+        ];
+    }
+
+    /**
+     * Extra ingredients keep their case ("Parmesan") but lose blanks and duplicates.
+     *
+     * @param  array<int, string|null>  $extras
+     * @return list<string>|null
+     */
+    private function cleanExtras(array $extras): ?array
+    {
+        $clean = array_values(collect($extras)
+            ->map(fn (?string $extra) => Str::of((string) $extra)->squish()->ucfirst()->toString())
+            ->filter()
+            ->unique(fn (string $extra) => Str::lower($extra))
+            ->all());
+
+        return $clean ?: null;
     }
 
     private function copyPhotoFrom(Household $household, int $itemId): ?string

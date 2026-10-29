@@ -3,6 +3,8 @@
 namespace Tests\Feature;
 
 use App\Enums\MovementType;
+use App\Enums\ReheatMethod;
+use App\Enums\ThawMethod;
 use App\Models\Freezer;
 use App\Models\Household;
 use App\Models\Item;
@@ -122,6 +124,73 @@ class ItemTest extends TestCase
         [$user] = $this->userWithFreezer();
 
         $this->actingAs($user)->post(route('items.store'), $this->payload())->assertSessionHasErrors('placements');
+    }
+
+    public function test_a_batch_keeps_how_to_eat_it()
+    {
+        [$user, , $freezer] = $this->userWithFreezer();
+
+        $this->actingAs($user)->post(route('items.store'), $this->payload([
+            'placements' => [['compartment_id' => $freezer->compartments->first()->id, 'quantity' => 4]],
+            'thaw' => 'fridge',
+            'reheat_method' => 'oven',
+            'reheat_minutes' => 25,
+            'reheat_temperature' => 180,
+            'extras' => [' parmesan ', 'Parmesan', 'salade  verte', ''],
+            'reheat_notes' => 'Couvrir de papier alu.',
+        ]))->assertRedirect();
+
+        $item = Item::query()->firstOrFail();
+
+        $this->assertSame(ThawMethod::Fridge, $item->thaw);
+        $this->assertSame(ReheatMethod::Oven, $item->reheat_method);
+        $this->assertSame(25, $item->reheat_minutes);
+        $this->assertSame(180, $item->reheat_temperature);
+        $this->assertSame(['Parmesan', 'Salade verte'], $item->extras);
+
+        $this->actingAs($user)
+            ->get(route('items.show', $item))
+            ->assertInertia(fn (Assert $page) => $page
+                ->where('item.reheatMethod', 'oven')
+                ->where('item.reheatTemperature', 180)
+                ->where('item.extras', ['Parmesan', 'Salade verte'])
+                ->where('item.reheatNotes', 'Couvrir de papier alu.'));
+
+        // Making the same dish again suggests the same way to eat it.
+        $this->actingAs($user)
+            ->get(route('items.create'))
+            ->assertInertia(fn (Assert $page) => $page
+                ->where('suggestions.0.name', 'Lasagnes')
+                ->where('suggestions.0.thaw', 'fridge')
+                ->where('suggestions.0.reheatMinutes', 25));
+    }
+
+    public function test_preparation_can_be_cleared_and_is_validated()
+    {
+        [$user, $household, $freezer] = $this->userWithFreezer();
+        $compartment = $freezer->compartments->first();
+        $item = Item::factory()->placedIn($compartment)->create([
+            'household_id' => $household->id,
+            'quantity' => 2,
+            'reheat_method' => 'microwave',
+            'reheat_minutes' => 4,
+            'extras' => ['Crème'],
+        ]);
+
+        $this->actingAs($user)->put(route('items.update', $item), $this->payload([
+            'placements' => [['compartment_id' => $compartment->id, 'quantity' => 2]],
+            'reheat_method' => 'grill',
+            'reheat_minutes' => 0,
+        ]))->assertSessionHasErrors(['reheat_method', 'reheat_minutes']);
+
+        $this->actingAs($user)->put(route('items.update', $item), $this->payload([
+            'placements' => [['compartment_id' => $compartment->id, 'quantity' => 2]],
+        ]))->assertRedirect();
+
+        $item->refresh();
+        $this->assertNull($item->reheat_method);
+        $this->assertNull($item->reheat_minutes);
+        $this->assertNull($item->extras);
     }
 
     public function test_editing_a_batch_can_spread_it_over_new_compartments()

@@ -43,6 +43,7 @@ class ItemResource extends JsonResource
             'frozenOn' => $this->frozen_on->toDateString(),
             'bestBefore' => $this->best_before?->toDateString(),
             'tags' => $this->tags ?? [],
+            ...self::preparation($this->resource),
             'finishedAt' => $this->finished_at?->toIso8601String(),
             'createdAt' => $this->created_at?->toIso8601String(),
             'freshness' => $this->freshness(),
@@ -59,6 +60,23 @@ class ItemResource extends JsonResource
                 'id' => $this->creator->id,
                 'name' => $this->creator->name,
             ] : null),
+        ];
+    }
+
+    /**
+     * How to eat the batch: thawing, reheating and what to add.
+     *
+     * @return array{thaw: string|null, reheatMethod: string|null, reheatMinutes: int|null, reheatTemperature: int|null, extras: list<string>, reheatNotes: string|null}
+     */
+    public static function preparation(Item $item): array
+    {
+        return [
+            'thaw' => $item->thaw?->value,
+            'reheatMethod' => $item->reheat_method?->value,
+            'reheatMinutes' => $item->reheat_minutes,
+            'reheatTemperature' => $item->reheat_temperature,
+            'extras' => $item->extras ?? [],
+            'reheatNotes' => $item->reheat_notes,
         ];
     }
 

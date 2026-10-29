@@ -4,6 +4,8 @@ namespace App\Models;
 
 use App\Enums\ItemCategory;
 use App\Enums\ItemUnit;
+use App\Enums\ReheatMethod;
+use App\Enums\ThawMethod;
 use Carbon\CarbonImmutable;
 use Database\Factories\ItemFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
@@ -23,6 +25,12 @@ use Illuminate\Support\Facades\Storage;
  * @property ItemCategory $category
  * @property string|null $description
  * @property string|null $photo_path
+ * @property ThawMethod|null $thaw
+ * @property ReheatMethod|null $reheat_method
+ * @property int|null $reheat_minutes
+ * @property int|null $reheat_temperature
+ * @property list<string>|null $extras
+ * @property string|null $reheat_notes
  * @property int $quantity
  * @property int $initial_quantity
  * @property ItemUnit $unit
@@ -38,6 +46,7 @@ use Illuminate\Support\Facades\Storage;
  */
 #[Fillable([
     'household_id', 'created_by', 'name', 'emoji', 'category', 'description',
+    'thaw', 'reheat_method', 'reheat_minutes', 'reheat_temperature', 'extras', 'reheat_notes',
     'photo_path', 'quantity', 'initial_quantity', 'unit', 'servings', 'weight_grams',
     'prepared_on', 'frozen_on', 'best_before', 'tags', 'finished_at',
 ])]
@@ -54,6 +63,9 @@ class Item extends Model
         return [
             'category' => ItemCategory::class,
             'unit' => ItemUnit::class,
+            'thaw' => ThawMethod::class,
+            'reheat_method' => ReheatMethod::class,
+            'extras' => 'array',
             'prepared_on' => 'date',
             'frozen_on' => 'date',
             'best_before' => 'date',

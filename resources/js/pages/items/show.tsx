@@ -34,6 +34,7 @@ import {
     freshnessColor,
 } from '@/components/items/item-visuals';
 import { PhotoHero } from '@/components/items/photo-hero';
+import { PreparationCard } from '@/components/items/preparation-card';
 import { TakeSheet } from '@/components/items/take-sheet';
 import { PageHeader } from '@/components/page-header';
 import { BottomSheet } from '@/components/ui/bottom-sheet';
@@ -289,6 +290,8 @@ export default function ItemShow({
                             </div>
                         </div>
                     </div>
+
+                    <PreparationCard item={item} />
 
                     {/* Details */}
                     <div className="surface p-5">

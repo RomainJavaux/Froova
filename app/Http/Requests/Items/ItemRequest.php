@@ -4,6 +4,8 @@ namespace App\Http\Requests\Items;
 
 use App\Enums\ItemCategory;
 use App\Enums\ItemUnit;
+use App\Enums\ReheatMethod;
+use App\Enums\ThawMethod;
 use App\Models\Compartment;
 use App\Models\Household;
 use Closure;
@@ -33,6 +35,14 @@ class ItemRequest extends FormRequest
             'best_before' => ['nullable', 'date', 'after_or_equal:frozen_on'],
             'tags' => ['nullable', 'array', 'max:8'],
             'tags.*' => ['string', 'max:30'],
+            // How to eat it: thawing, reheating, what to add.
+            'thaw' => ['nullable', Rule::enum(ThawMethod::class)],
+            'reheat_method' => ['nullable', Rule::enum(ReheatMethod::class)],
+            'reheat_minutes' => ['nullable', 'integer', 'min:1', 'max:600'],
+            'reheat_temperature' => ['nullable', 'integer', 'min:30', 'max:300'],
+            'extras' => ['nullable', 'array', 'max:12'],
+            'extras.*' => ['nullable', 'string', 'max:60'],
+            'reheat_notes' => ['nullable', 'string', 'max:1000'],
             // Where the batch goes: one or several compartments, each with its share of the quantity.
             'placements' => ['required', 'array', 'min:1', 'max:24'],
             'placements.*.compartment_id' => ['required', 'integer', 'distinct', $this->compartmentBelongsToHousehold()],
@@ -54,6 +64,10 @@ class ItemRequest extends FormRequest
             'best_before' => 'date limite',
             'weight_grams' => 'poids',
             'servings' => 'nombre de parts',
+            'reheat_minutes' => 'temps de réchauffage',
+            'reheat_temperature' => 'température',
+            'extras.*' => 'ingrédient',
+            'reheat_notes' => 'instructions',
         ];
     }
 
