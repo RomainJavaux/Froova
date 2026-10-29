@@ -2,6 +2,7 @@ import QRCode from 'qrcode';
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { formatQuantity, useCatalog } from '@/lib/catalog';
 import { formatDate } from '@/lib/dates';
+import { reheatSummary } from '@/lib/preparation';
 import { cn } from '@/lib/utils';
 import itemsRoutes from '@/routes/items';
 import type { Item } from '@/types';
@@ -85,6 +86,7 @@ export function ItemLabel({
         );
     }
 
+    const reheat = reheatSummary(catalog, item);
     const details = [
         formatQuantity(catalog, item.unit, item.initialQuantity),
         item.servings ? `${item.servings} pers.` : null,
@@ -131,6 +133,11 @@ export function ItemLabel({
                         className="mt-[1.2mm] leading-[1.25] font-semibold tabular-nums"
                         style={{ fontSize: '7.5pt' }}
                     >
+                        {reheat && (
+                            <div className="truncate font-extrabold">
+                                {reheat}
+                            </div>
+                        )}
                         <div className="truncate">
                             Congelé le {formatDate(item.frozenOn, NUMERIC_DATE)}
                         </div>
