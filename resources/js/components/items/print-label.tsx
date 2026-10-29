@@ -1,6 +1,6 @@
 import QRCode from 'qrcode';
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
-import { formatQuantity, useCatalog } from '@/lib/catalog';
+import { useCatalog } from '@/lib/catalog';
 import { formatDate } from '@/lib/dates';
 import { reheatSummary } from '@/lib/preparation';
 import { cn } from '@/lib/utils';
@@ -88,7 +88,6 @@ export function ItemLabel({
 
     const reheat = reheatSummary(catalog, item);
     const details = [
-        formatQuantity(catalog, item.unit, item.initialQuantity),
         item.servings ? `${item.servings} pers.` : null,
         item.weightGrams ? `${item.weightGrams} g` : null,
     ].filter(Boolean);
@@ -141,7 +140,11 @@ export function ItemLabel({
                         <div className="truncate">
                             Congelé le {formatDate(item.frozenOn, NUMERIC_DATE)}
                         </div>
-                        <div className="truncate">{details.join(' · ')}</div>
+                        {details.length > 0 && (
+                            <div className="truncate">
+                                {details.join(' · ')}
+                            </div>
+                        )}
                     </div>
                 </div>
             </div>
